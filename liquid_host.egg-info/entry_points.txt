@@ -1,0 +1,2 @@
+[console_scripts]
+liquid-host = liquid_host.cli.main:cli

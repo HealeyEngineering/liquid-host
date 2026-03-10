@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Host</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3347;
+    --text: #e1e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-dim: #4a62b3;
+    --user-bg: #1e2a4a;
+    --assistant-bg: #1a1d27;
+    --error: #ff6b6b;
+    --success: #51cf66;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ─────────────────────────────── */
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .status-dot.ready { background: var(--success); }
+  .status-dot.error { background: var(--error); }
+
+  #model-name { color: var(--text-dim); }
+
+  /* ── Settings panel ─────────────────────── */
+
+  .mcp-badge {
+    background: #1a3a2a;
+    border: 1px solid #2a5a3a;
+    color: var(--success);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .mcp-badge.hidden { display: none; }
+
+  .settings-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .settings-toggle:hover { color: var(--text); border-color: var(--accent-dim); }
+
+  .settings-panel {
+    display: none;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    flex-shrink: 0;
+  }
+  .settings-panel.open { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
+
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .setting-group label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .setting-group input, .setting-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    width: 120px;
+  }
+  .setting-group input:focus, .setting-group select:focus {
+    outline: none;
+    border-color: var(--accent-dim);
+  }
+
+  /* ── Chat area ──────────────────────────── */
+
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .message {
+    max-width: 780px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .message .status-line {
+    font-size: 12px;
+    color: var(--accent);
+    font-style: italic;
+    padding: 2px 0;
+  }
+
+  .message .status-line::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .message.user {
+    background: var(--user-bg);
+    border: 1px solid #2a3a5c;
+  }
+
+  .message.assistant {
+    background: var(--assistant-bg);
+    border: 1px solid var(--border);
+    white-space: normal;
+  }
+
+  /* ── Markdown styles ─────────────────────── */
+  .message.assistant .response-text p { margin: 0.5em 0; }
+  .message.assistant .response-text p:first-child { margin-top: 0; }
+  .message.assistant .response-text p:last-child { margin-bottom: 0; }
+  .message.assistant .response-text code {
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  }
+  .message.assistant .response-text pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+  }
+  .message.assistant .response-text pre code {
+    background: none;
+    padding: 0;
+    font-size: 13px;
+  }
+  .message.assistant .response-text ul,
+  .message.assistant .response-text ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+  .message.assistant .response-text blockquote {
+    border-left: 3px solid var(--accent-dim);
+    padding-left: 12px;
+    color: var(--text-dim);
+    margin: 0.5em 0;
+  }
+  .message.assistant .response-text h1,
+  .message.assistant .response-text h2,
+  .message.assistant .response-text h3 {
+    margin: 0.6em 0 0.3em;
+  }
+  .message.assistant .response-text table {
+    border-collapse: collapse;
+    margin: 0.5em 0;
+  }
+  .message.assistant .response-text th,
+  .message.assistant .response-text td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .message.assistant .response-text th {
+    background: var(--surface2);
+  }
+  .message.assistant .response-text a {
+    color: var(--accent);
+  }
+
+  .message .role-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    color: var(--text-dim);
+  }
+  .message.user .role-label { color: var(--accent); }
+
+  .message.error {
+    background: #2a1a1a;
+    border: 1px solid #4a2a2a;
+    color: var(--error);
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    gap: 8px;
+    text-align: center;
+  }
+  .empty-state .title { font-size: 18px; color: var(--text); font-weight: 500; }
+  .empty-state .subtitle { font-size: 13px; }
+
+  /* ── Input area ─────────────────────────── */
+
+  .input-area {
+    padding: 16px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    max-width: 780px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+  }
+
+  #chat-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    min-height: 46px;
+    max-height: 200px;
+    line-height: 1.5;
+  }
+  #chat-input:focus { outline: none; border-color: var(--accent-dim); }
+  #chat-input::placeholder { color: var(--text-dim); }
+
+  .send-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    align-self: end;
+    height: 46px;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--accent-dim); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .input-hint {
+    max-width: 780px;
+    margin: 6px auto 0;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Liquid Host</h1>
+  <div class="status-bar">
+    <span id="mcp-badge" class="mcp-badge hidden" title="MCP tools available"></span>
+    <span id="model-name">connecting...</span>
+    <span class="status-dot" id="status-dot"></span>
+    <button class="settings-toggle" id="settings-btn">Settings</button>
+  </div>
+</header>
+
+<div class="settings-panel" id="settings-panel">
+  <div class="setting-group">
+    <label>Temperature</label>
+    <input type="number" id="opt-temp" value="0.3" min="0" max="2" step="0.1">
+  </div>
+  <div class="setting-group">
+    <label>Max Tokens</label>
+    <input type="number" id="opt-max-tokens" value="4096" min="1" max="16384" step="64">
+  </div>
+  <div class="setting-group">
+    <label>Min P</label>
+    <input type="number" id="opt-min-p" value="0.15" min="0" max="1" step="0.05">
+  </div>
+  <div class="setting-group">
+    <label>Rep. Penalty</label>
+    <input type="number" id="opt-rep-penalty" value="1.05" min="1" max="2" step="0.05">
+  </div>
+  <div class="setting-group">
+    <label>System Prompt</label>
+    <input type="text" id="opt-system" placeholder="(optional)" style="width: 260px;">
+  </div>
+  <div class="setting-group">
+    <label>MCP Tools</label>
+    <select id="opt-use-tools" style="width: 80px;">
+      <option value="true" selected>On</option>
+      <option value="false">Off</option>
+    </select>
+  </div>
+</div>
+
+<div class="chat-container" id="chat-container">
+  <div class="empty-state" id="empty-state">
+    <div class="title">Liquid Host</div>
+    <div class="subtitle">Send a message to start chatting with the loaded model</div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="chat-input" rows="1" placeholder="Type a message..."></textarea>
+    <button class="send-btn" id="send-btn">Send</button>
+  </div>
+  <div class="input-hint">Enter to send &middot; Shift+Enter for newline</div>
+</div>
+
+<script>
+marked.setOptions({ breaks: true, gfm: true });
+
+const API_BASE = window.location.origin;
+
+const chatContainer = document.getElementById("chat-container");
+const chatInput = document.getElementById("chat-input");
+const sendBtn = document.getElementById("send-btn");
+const statusDot = document.getElementById("status-dot");
+const modelName = document.getElementById("model-name");
+const settingsBtn = document.getElementById("settings-btn");
+const settingsPanel = document.getElementById("settings-panel");
+const emptyState = document.getElementById("empty-state");
+
+let messages = [];
+let isGenerating = false;
+
+// ── Settings toggle ──────────────────────
+
+settingsBtn.addEventListener("click", () => {
+  settingsPanel.classList.toggle("open");
+});
+
+// ── Auto-resize textarea ─────────────────
+
+chatInput.addEventListener("input", () => {
+  chatInput.style.height = "auto";
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 200) + "px";
+});
+
+// ── Status polling ───────────────────────
+
+const mcpBadge = document.getElementById("mcp-badge");
+
+async function pollStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/status`);
+    const data = await res.json();
+    if (data.loaded_model) {
+      modelName.textContent = data.loaded_model;
+      statusDot.className = "status-dot ready";
+    } else {
+      modelName.textContent = "no model loaded";
+      statusDot.className = "status-dot error";
+    }
+    if (data.mcp_connected && data.mcp_tools.length > 0) {
+      mcpBadge.textContent = `MCP: ${data.mcp_tools.length} tools`;
+      mcpBadge.classList.remove("hidden");
+    } else {
+      mcpBadge.classList.add("hidden");
+    }
+  } catch {
+    modelName.textContent = "server offline";
+    statusDot.className = "status-dot error";
+    mcpBadge.classList.add("hidden");
+  }
+}
+
+pollStatus();
+setInterval(pollStatus, 5000);
+
+// ── Chat ─────────────────────────────────
+
+function addMessage(role, content) {
+  if (emptyState) emptyState.remove();
+
+  const div = document.createElement("div");
+  div.className = `message ${role}`;
+  div.innerHTML = `<div class="role-label">${role}</div><div class="content"></div>`;
+  div.querySelector(".content").textContent = content;
+  chatContainer.appendChild(div);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  return div;
+}
+
+function getSettings() {
+  return {
+    temperature: parseFloat(document.getElementById("opt-temp").value),
+    max_tokens: parseInt(document.getElementById("opt-max-tokens").value),
+    min_p: parseFloat(document.getElementById("opt-min-p").value),
+    repetition_penalty: parseFloat(document.getElementById("opt-rep-penalty").value),
+    system: document.getElementById("opt-system").value.trim(),
+    use_tools: document.getElementById("opt-use-tools").value === "true",
+  };
+}
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || isGenerating) return;
+
+  isGenerating = true;
+  sendBtn.disabled = true;
+  chatInput.value = "";
+  chatInput.style.height = "auto";
+
+  addMessage("user", text);
+  messages.push({ role: "user", content: text });
+
+  const settings = getSettings();
+  const apiMessages = [];
+  if (settings.system) {
+    apiMessages.push({ role: "system", content: settings.system });
+  }
+  apiMessages.push(...messages);
+
+  const assistantDiv = addMessage("assistant", "");
+  const contentEl = assistantDiv.querySelector(".content");
+
+  try {
+    const res = await fetch(`${API_BASE}/v1/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: apiMessages,
+        temperature: settings.temperature,
+        max_tokens: settings.max_tokens,
+        min_p: settings.min_p,
+        repetition_penalty: settings.repetition_penalty,
+        stream: true,
+        use_tools: settings.use_tools,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = "";
+    let buffer = "";
+    let statusEl = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data: ")) continue;
+        const payload = trimmed.slice(6);
+        if (payload === "[DONE]") break;
+
+        try {
+          const chunk = JSON.parse(payload);
+          const delta = chunk.choices?.[0]?.delta;
+          if (!delta) continue;
+
+          if (delta.status !== undefined) {
+            // Status update from tool-calling workflow
+            if (delta.status === "") {
+              // Clear status — about to get content
+              if (statusEl) { statusEl.remove(); statusEl = null; }
+            } else {
+              if (!statusEl) {
+                statusEl = document.createElement("div");
+                statusEl.className = "status-line";
+                contentEl.appendChild(statusEl);
+              }
+              statusEl.textContent = delta.status;
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+          }
+
+          if (delta.thinking) {
+            // Thinking update from model — show in a muted style
+            let thinkEl = contentEl.querySelector(".thinking-line");
+            if (!thinkEl) {
+              thinkEl = document.createElement("div");
+              thinkEl.className = "thinking-line";
+              thinkEl.style.color = "#888";
+              thinkEl.style.fontStyle = "italic";
+              contentEl.appendChild(thinkEl);
+            }
+            thinkEl.textContent += delta.thinking;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+          }
+
+          if (delta.content) {
+            // Remove status and thinking lines when content starts
+            if (statusEl) { statusEl.remove(); statusEl = null; }
+            const thinkEl = contentEl.querySelector(".thinking-line");
+            if (thinkEl) thinkEl.remove();
+            fullResponse += delta.content;
+            // Remove any remaining status nodes
+            const existingStatuses = contentEl.querySelectorAll(".status-line");
+            existingStatuses.forEach(s => s.remove());
+            // Render markdown into response container
+            let textNode = contentEl.querySelector(".response-text");
+            if (!textNode) {
+              textNode = document.createElement("div");
+              textNode.className = "response-text";
+              contentEl.appendChild(textNode);
+            }
+            textNode.innerHTML = marked.parse(fullResponse);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+          }
+        } catch { /* skip malformed chunks */ }
+      }
+    }
+
+    messages.push({ role: "assistant", content: fullResponse });
+
+  } catch (err) {
+    assistantDiv.className = "message error";
+    contentEl.textContent = `Error: ${err.message}`;
+  } finally {
+    isGenerating = false;
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+}
+
+sendBtn.addEventListener("click", sendMessage);
+
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+chatInput.focus();
+</script>
+</body>
+</html>
