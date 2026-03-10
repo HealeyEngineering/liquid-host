@@ -491,6 +491,7 @@ async def _startup_mcp(mcp_config: str | None = None) -> None:
 def create_app(
     cache_dir: str | None = None,
     preload_model: str | None = None,
+    preload_model_path: str | None = None,
     preload_gguf: str | None = None,
     device_map: str = "auto",
     dtype: str | None = None,
@@ -506,9 +507,11 @@ def create_app(
     if preload_gguf:
         _manager.load_gguf(preload_gguf, n_ctx=n_ctx, n_gpu_layers=n_gpu_layers)
     elif preload_model:
-        _manager.download(preload_model)
+        if not preload_model_path:
+            _manager.download(preload_model)
         _manager.load(
             preload_model,
+            model_path=preload_model_path,
             device_map=device_map,
             dtype=dtype,
             use_flash_attn=use_flash_attn,

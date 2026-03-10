@@ -144,17 +144,25 @@ class ModelManager:
         self,
         model_key: str,
         *,
+        model_path: str | None = None,
         device_map: str = "auto",
         dtype: str | None = None,
         use_flash_attn: bool = False,
     ) -> None:
-        """Load a transformers model into memory."""
+        """Load a transformers model into memory.
+
+        Args:
+            model_key: Key in MODEL_REGISTRY to look up model spec.
+            model_path: Optional local path to load weights from (e.g. /repository
+                        on HF Inference Endpoints). Falls back to spec.repo_id.
+        """
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         spec = get_model_spec(model_key)
+        load_from = model_path or spec.repo_id
 
-        if self._loaded_spec and self._loaded_spec.repo_id == spec.repo_id:
+        if self._loaded_spec and self._loaded_spec.repo_id == spec.repo_id and model_path is None:
             logger.info("%s is already loaded", spec.name)
             return
 
@@ -163,19 +171,20 @@ class ModelManager:
         resolved_dtype = dtype or spec.recommended_dtype
         torch_dtype = getattr(torch, resolved_dtype, torch.bfloat16)
 
-        logger.info("Loading %s via transformers (dtype=%s, device_map=%s) ...", spec.name, resolved_dtype, device_map)
+        logger.info("Loading %s via transformers from %s (dtype=%s, device_map=%s) ...", spec.name, load_from, resolved_dtype, device_map)
 
         kwargs: dict = {
-            "pretrained_model_name_or_path": spec.repo_id,
+            "pretrained_model_name_or_path": load_from,
             "device_map": device_map,
             "torch_dtype": torch_dtype,
-            "cache_dir": str(self.cache_dir),
         }
+        if not model_path:
+            kwargs["cache_dir"] = str(self.cache_dir)
         if use_flash_attn:
             kwargs["attn_implementation"] = "flash_attention_2"
 
         self._hf_tokenizer = AutoTokenizer.from_pretrained(
-            spec.repo_id, cache_dir=str(self.cache_dir)
+            load_from, cache_dir=None if model_path else str(self.cache_dir)
         )
         self._hf_model = AutoModelForCausalLM.from_pretrained(**kwargs)
         self._loaded_spec = spec
