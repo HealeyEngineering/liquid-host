@@ -486,30 +486,40 @@ class ModelManager:
         logger.info("generate_with_tools [%s]: starting — %d MCP tools, max_rounds=%d", self._backend, tool_count, max_tool_rounds)
         yield {"type": "status", "content": f"Connected to MCP ({tool_count} tools available)"}
 
-        did_tool_call = False  # Track whether we've executed any tool calls
-
         for _round in range(max_tool_rounds):
             logger.info("generate_with_tools: round %d/%d — %d messages in context", _round + 1, max_tool_rounds, len(working_messages))
             yield {"type": "status", "content": f"Generating response (round {_round + 1})..."}
 
-            # Stream the response, collecting full text for tool-call parsing.
+            # Stream the response with a look-back window for tool call detection.
             # Thinking tokens are emitted in batches as they arrive.
-            # Content tokens are buffered on first round (may contain tool calls),
-            # but streamed directly on subsequent rounds (final answer after tools).
-            stream_directly = did_tool_call  # After tool calls, stream the final answer
+            # Content tokens are streamed with a sliding window held back — if a
+            # tool call marker (e.g. "<tool_call>", "[func(") appears in the
+            # window, we stop streaming and switch to tool execution.  Tokens
+            # that have already been streamed past the window are safe (no marker).
+            _TOOL_MARKERS = ["<tool_call>", "<|tool_call_start|>"]
+            _WINDOW_SIZE = 20  # tokens held back (enough to contain any marker)
+            _STRIP_TOKENS = ["<|im_end|>", "<|im_start|>", "<|endoftext|>"]
+
+            def _clean_token(tok: str) -> str:
+                for st in _STRIP_TOKENS:
+                    tok = tok.replace(st, "")
+                return tok
+
             full_tokens: list[str] = []
             thinking_buffer: list[str] = []
-            content_buffer: list[str] = []
+            content_buffer: list[str] = []  # sliding window of recent tokens
+            streamed_count = 0  # how many content tokens we've already emitted
+            tool_marker_found = False
             in_thinking = False
             thinking_done = False
 
             try:
-                skip = self._backend != BACKEND_LLAMACPP
-
+                # Never skip special tokens in tool-calling mode — we need
+                # to see <tool_call>, <|tool_call_start|>, etc. in the output
                 async for token, _full in self._async_stream_raw(
                     working_messages, config,
-                    tools=tools_schema if not stream_directly else None,
-                    skip_special_tokens=skip,
+                    tools=tools_schema,
+                    skip_special_tokens=False,
                 ):
                     full_tokens.append(token)
 
@@ -535,12 +545,28 @@ class ModelManager:
                                 thinking_buffer = []
                             continue
 
-                    if stream_directly:
-                        # Final answer after tool calls — stream tokens immediately
-                        yield {"type": "token", "content": token}
-                    else:
-                        # First round — buffer content tokens (may contain tool calls)
-                        content_buffer.append(token)
+                    content_buffer.append(token)
+
+                    if tool_marker_found:
+                        # Already found a marker — just keep buffering
+                        continue
+
+                    # Check if the recent window contains a tool call marker
+                    window_text = "".join(content_buffer[-_WINDOW_SIZE:])
+                    for marker in _TOOL_MARKERS:
+                        if marker in window_text:
+                            tool_marker_found = True
+                            break
+
+                    if tool_marker_found:
+                        continue
+
+                    # Stream tokens that are safely past the window
+                    while len(content_buffer) - streamed_count > _WINDOW_SIZE:
+                        cleaned = _clean_token(content_buffer[streamed_count])
+                        streamed_count += 1
+                        if cleaned:
+                            yield {"type": "token", "content": cleaned}
 
             except Exception as e:
                 logger.error("generate_with_tools: streaming failed — %s", e)
@@ -550,11 +576,6 @@ class ModelManager:
             # Flush any remaining thinking buffer
             if thinking_buffer:
                 yield {"type": "thinking", "content": "".join(thinking_buffer)}
-
-            # If we streamed directly (final answer), we're done
-            if stream_directly:
-                yield {"type": "done"}
-                return
 
             raw_output = "".join(full_tokens)
             logger.info("generate_with_tools: raw output (%d chars): %.500s", len(raw_output), raw_output)
@@ -566,18 +587,32 @@ class ModelManager:
                 logger.info("generate_with_tools: parsed tool call — %s(%s)", tc["name"], tc["arguments"])
 
             if not tool_calls:
-                # No tool calls — emit all buffered content tokens
-                for token in content_buffer:
-                    yield {"type": "token", "content": token}
+                # No tool calls — flush remaining window tokens
+                for i in range(streamed_count, len(content_buffer)):
+                    cleaned = _clean_token(content_buffer[i])
+                    if cleaned:
+                        yield {"type": "token", "content": cleaned}
                 yield {"type": "done"}
                 return
+
+            # Tool calls found — clear any already-streamed partial content
+            if streamed_count > 0:
+                yield {"type": "clear"}
 
             # Append the assistant's raw response (strip tool call markup and special tokens)
             import re as _re
             clean_output = raw_output.replace("<|im_end|>", "")
             clean_output = _re.sub(r"<tool_call>\s*\{.*?\}\s*</tool_call>", "", clean_output, flags=_re.DOTALL)
             clean_output = _re.sub(r"\<\|tool_call_start\|>.*?<\|tool_call_end\|>", "", clean_output, flags=_re.DOTALL)
-            working_messages.append({"role": "assistant", "content": clean_output.strip()})
+            assistant_content = clean_output.strip()
+            working_messages.append({"role": "assistant", "content": assistant_content})
+
+            # For UI history, include the tool call markup so the model sees
+            # the full tool-calling pattern on follow-up turns
+            history_output = raw_output
+            for st in _STRIP_TOKENS:
+                history_output = history_output.replace(st, "")
+            yield {"type": "history_message", "role": "assistant", "content": history_output.strip()}
 
             # Extract model-generated status lines preceding each tool call.
             # The model writes a line like "Looking up NFLX earnings..." before the tool call.
@@ -604,16 +639,21 @@ class ModelManager:
                         tool_status_lines[i] = status_line
 
             # Execute each tool call and append results
-            did_tool_call = True
             for i, call in enumerate(tool_calls):
                 logger.info("generate_with_tools: round %d, call %d/%d — %s(%s)", _round + 1, i + 1, len(tool_calls), call["name"], call["arguments"])
                 status_msg = tool_status_lines.get(i, f"Calling tool: {call['name']}...")
                 logger.info("generate_with_tools: status message for tool %d: %r", i, status_msg)
                 yield {"type": "status", "content": status_msg}
-                result_text = await mcp_manager.call_tool(call["name"], call["arguments"])
-                logger.info("generate_with_tools: got result from %s (%d chars)", call["name"], len(result_text))
-                logger.info("generate_with_tools: tool result preview: %.500s", result_text)
+                try:
+                    result_text = await mcp_manager.call_tool(call["name"], call["arguments"])
+                    logger.info("generate_with_tools: got result from %s (%d chars)", call["name"], len(result_text))
+                    logger.info("generate_with_tools: tool result preview: %.500s", result_text)
+                except Exception as tool_err:
+                    logger.error("generate_with_tools: tool call %s failed — %s", call["name"], tool_err)
+                    result_text = f"Error calling {call['name']}: {tool_err}"
+                    yield {"type": "status", "content": f"Tool error: {call['name']} — {tool_err}"}
                 working_messages.append({"role": "tool", "content": result_text})
+                yield {"type": "history_message", "role": "tool", "content": result_text}
                 yield {"type": "status", "content": f"Got result from {call['name']}"}
 
         # Exhausted rounds — final streaming answer
@@ -621,5 +661,8 @@ class ModelManager:
         yield {"type": "status", "content": "Generating final answer..."}
         yield {"type": "status", "content": ""}
         async for token, _ in self._async_stream_raw(working_messages, config):
-            yield {"type": "token", "content": token}
+            for st in ["<|im_end|>", "<|im_start|>", "<|endoftext|>"]:
+                token = token.replace(st, "")
+            if token:
+                yield {"type": "token", "content": token}
         yield {"type": "done"}

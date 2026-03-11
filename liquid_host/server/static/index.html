@@ -609,6 +609,26 @@ async function sendMessage() {
             }
           }
 
+          if (delta.history_message) {
+            // Store intermediate tool messages for multi-turn context
+            messages.push({
+              role: delta.history_message.role,
+              content: delta.history_message.content,
+            });
+          }
+
+          if (delta.clear) {
+            // Tool call detected — clear any partially streamed content
+            fullResponse = "";
+            const textNode = contentEl.querySelector(".response-text");
+            if (textNode) textNode.remove();
+            const thinkEl = contentEl.querySelector(".thinking-line");
+            if (thinkEl) thinkEl.remove();
+            if (statusEl) { statusEl.remove(); statusEl = null; }
+            const existingStatuses = contentEl.querySelectorAll(".status-line");
+            existingStatuses.forEach(s => s.remove());
+          }
+
           if (delta.thinking) {
             // Thinking update from model — show in a muted style
             let thinkEl = contentEl.querySelector(".thinking-line");
