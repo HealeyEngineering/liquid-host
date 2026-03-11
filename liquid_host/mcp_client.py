@@ -184,27 +184,48 @@ class McpClientManager:
     def parse_tool_calls(text: str) -> list[dict]:
         """Parse tool calls from model output.
 
-        Handles both formats:
-            <|tool_call_start|>[func_name(arg1="val1", arg2=123)]<|tool_call_end|>
-            [func_name(arg1="val1", arg2=123)]   (special tokens stripped)
+        Handles three formats:
+            1. <|tool_call_start|>[func_name(arg1="val1")]<|tool_call_end|>  (special tokens)
+            2. [func_name(arg1="val1")]                                      (bare bracket)
+            3. <tool_call>{"name":"func","arguments":{...}}</tool_call>      (XML+JSON, fine-tuned)
 
         Returns a list of {"name": ..., "arguments": {...}} dicts.
         """
-        # Try with special tokens first
+        import json as _json
+
+        calls = []
+
+        # Format 3: <tool_call> JSON </tool_call> (fine-tuned model format)
+        xml_pattern = r"<tool_call>\s*(\{.*?\})\s*</tool_call>"
+        xml_matches = re.findall(xml_pattern, text, re.DOTALL)
+        if xml_matches:
+            for m in xml_matches:
+                try:
+                    parsed = _json.loads(m)
+                    name = parsed.get("name")
+                    arguments = parsed.get("arguments", {})
+                    if isinstance(arguments, str):
+                        arguments = _json.loads(arguments)
+                    if name:
+                        calls.append({"name": name, "arguments": arguments})
+                except (_json.JSONDecodeError, TypeError):
+                    continue
+            if calls:
+                return calls
+
+        # Format 1: special tokens
         pattern = r"<\|tool_call_start\|>\s*\[(.+?)\]\s*<\|tool_call_end\|>"
         matches = re.findall(pattern, text, re.DOTALL)
 
-        # Fall back to bare bracket format (after </think> block if present)
+        # Format 2: bare bracket (after </think> block if present)
         if not matches:
-            # Strip thinking block to avoid false matches inside <think>
             cleaned = text
             if "</think>" in cleaned:
                 cleaned = cleaned.split("</think>", 1)[1]
             bare_pattern = r"\[(\w+\(.*?\))\]"
             matches = re.findall(bare_pattern, cleaned, re.DOTALL)
-        calls = []
+
         for match in matches:
-            # Parse Pythonic call like: func_name(arg1="val1", arg2=123)
             func_match = re.match(r"(\w+)\((.*)?\)", match.strip(), re.DOTALL)
             if not func_match:
                 continue

@@ -1,3 +1,7 @@
 .cache
 .claude
 .env
+data/*
+__pycache__
+*.pyc
+build

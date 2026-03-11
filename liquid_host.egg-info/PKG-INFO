@@ -12,10 +12,21 @@ Requires-Dist: uvicorn[standard]>=0.27.0
 Requires-Dist: pydantic>=2.0.0
 Requires-Dist: click>=8.1.0
 Requires-Dist: rich>=13.0.0
+Requires-Dist: mcp>=1.0.0
+Requires-Dist: llama-cpp-python>=0.3.0
+Requires-Dist: leap-bundle>=0.9.0
 Provides-Extra: flash-attn
 Requires-Dist: flash-attn>=2.5.0; extra == "flash-attn"
 Provides-Extra: vllm
 Requires-Dist: vllm>=0.10.2; extra == "vllm"
+Provides-Extra: training
+Requires-Dist: peft>=0.14.0; extra == "training"
+Requires-Dist: trl>=0.15.0; extra == "training"
+Requires-Dist: datasets>=3.0.0; extra == "training"
+Requires-Dist: bitsandbytes>=0.45.0; extra == "training"
+Provides-Extra: remote-training
+Requires-Dist: datasets>=3.0.0; extra == "remote-training"
+Requires-Dist: huggingface-hub>=0.20.0; extra == "remote-training"
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0.0; extra == "dev"
 Requires-Dist: httpx>=0.27.0; extra == "dev"

@@ -349,6 +349,219 @@ liquid-host download lfm2-1.2b --force
 
 The default cache location is `~/.cache/liquid-host/models/`. GGUF models downloaded via `leap-bundle` are stored in `~/.cache/liquid-host/models/gguf/`. Override it globally with `--cache-dir` on any command.
 
+## Fine-Tuning
+
+Liquid Host supports LoRA/QLoRA fine-tuning of LFM models on chat-format JSONL data. Training can run locally (requires a GPU) or remotely on HuggingFace Spaces.
+
+### Training Data Format
+
+Each line is a JSON object with a `messages` array. Supports `user`, `assistant`, `system`, and `tool` roles:
+
+```jsonl
+{"messages": [{"role": "user", "content": "What were AAPL's Q3 results?"}, {"role": "assistant", "content": "<think>Look up AAPL earnings.</think>\nLooking up recent AAPL earnings...\n[find_events(bloomberg_ticker='AAPL:US', event_type='earnings')]"}, {"role": "tool", "content": "{\"events\": [...]}"}, {"role": "assistant", "content": "Apple reported Q3 revenue of $85.8B..."}]}
+```
+
+See `data/training/aiera_tools.jsonl` for 23 examples covering Aiera MCP tool calls (earnings, financials, filings, transcripts, conferences, etc.).
+
+### Install Training Dependencies
+
+For local training:
+
+```bash
+pip install -e ".[training]"
+```
+
+For remote training (no GPU needed):
+
+```bash
+pip install -e ".[remote-training]"
+```
+
+### Local Fine-Tuning
+
+Requires a CUDA GPU with sufficient VRAM.
+
+```bash
+liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+  --output ./finetune-output \
+  --epochs 3 \
+  --lora-rank 16 \
+  --lora-alpha 32 \
+  --max-seq-length 2048
+```
+
+For QLoRA (4-bit quantized base model, reduces VRAM usage):
+
+```bash
+liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+  --quantize-4bit
+```
+
+The adapter is saved to `./finetune-output/adapter/`.
+
+### Remote Fine-Tuning (HuggingFace Spaces)
+
+No local GPU required. Launches a custom HF Space with a GPU backend that runs the training job, then pushes the adapter to the Hub.
+
+```bash
+export HF_TOKEN=hf_your_token_here
+
+liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+  --remote \
+  --backend l4x1 \
+  --project-name my-finetune
+```
+
+Available GPU backends:
+
+| Backend | GPU | Notes |
+|---------|-----|-------|
+| `t4-small` | NVIDIA T4 (16GB) | Budget option |
+| `t4-medium` | NVIDIA T4 (16GB) | More CPU/RAM |
+| `a10g-small` | NVIDIA A10G (24GB) | Good for 1-3B models |
+| `a10g-large` | NVIDIA A10G (24GB) | More CPU/RAM |
+| `l4x1` | NVIDIA L4 (24GB) | Recommended for LFM2.5 |
+| `l4x4` | 4x NVIDIA L4 | Multi-GPU |
+| `l40sx1` | NVIDIA L40S (48GB) | Larger models |
+| `a100-large` | NVIDIA A100 (80GB) | Maximum capability |
+
+Monitor training at the Space URL printed in the output. When complete, the adapter is pushed to `<username>/<project-name>` on the Hub.
+
+### Fine-Tuning CLI Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output`, `-o` | `./finetune-output` | Local output directory |
+| `--epochs` | `3` | Number of training epochs |
+| `--batch-size` | `4` | Per-device batch size |
+| `--lr` | `2e-4` | Learning rate |
+| `--lora-rank` | `16` | LoRA rank (higher = more capacity) |
+| `--lora-alpha` | `32` | LoRA alpha scaling |
+| `--lora-dropout` | `0.05` | LoRA dropout |
+| `--max-seq-length` | `2048` | Maximum sequence length |
+| `--quantize-4bit` | off | Use QLoRA (4-bit quantized base model) |
+| `--target-modules` | auto-detect | Comma-separated LoRA target modules |
+| `--gradient-accumulation` | `4` | Gradient accumulation steps |
+| `--remote` | off | Train on HuggingFace Spaces |
+| `--hf-token` | `$HF_TOKEN` | HuggingFace API token |
+| `--hf-username` | auto-detect | HuggingFace username |
+| `--project-name` | `liquid-host-finetune` | Hub project name for remote training |
+| `--backend` | `l4x1` | GPU backend for remote training |
+
+### Serving with a LoRA Adapter
+
+**From a local adapter:**
+
+```bash
+liquid-host serve --model lfm2.5-1.2b-thinking --adapter ./finetune-output/adapter
+```
+
+**From a Hub adapter (after remote training):**
+
+```bash
+liquid-host serve --model lfm2.5-1.2b-thinking --adapter username/my-finetune
+```
+
+The adapter is merged into the base model at startup with no inference overhead.
+
+## Deployment to HuggingFace Inference Endpoints
+
+Deploy Liquid Host as a custom Docker container on HuggingFace Inference Endpoints with GPU support.
+
+### Prerequisites
+
+1. [HuggingFace account](https://huggingface.co/) with a valid API token
+2. A container registry (GitHub Container Registry, Docker Hub, etc.)
+3. Docker installed locally
+
+### Build and Push the Docker Image
+
+```bash
+# Authenticate with your container registry
+echo $GHCR_TOKEN | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Build for linux/amd64
+    docker build --platform linux/amd64 -t ghcr.io/healeyengineering/liquid-host:latest .
+
+# Push
+    docker push ghcr.io/healeyengineering/liquid-host:latest
+```
+
+### Deploy with the Script
+
+```bash
+# Authenticate with HuggingFace
+pip install huggingface-hub
+huggingface-cli login
+
+# Deploy (base model only)
+python deploy/deploy_hf.py \
+  --image ghcr.io/healeyengineering/liquid-host:latest \
+  --instance-type nvidia-l4
+
+# Deploy with a fine-tuned LoRA adapter
+python deploy/deploy_hf.py \
+  --image ghcr.io/healeyengineering/liquid-host:latest \
+  --instance-type nvidia-l4 \
+  --adapter YOUR_USERNAME/my-finetune
+```
+
+### Deploy Script Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--image` | (required) | Docker image URL |
+| `--name` | `liquid-host-lfm` | Endpoint name |
+| `--repo` | `LiquidAI/LFM2.5-1.2B-Thinking` | HF model repo (mounted at `/repository`) |
+| `--instance-type` | `nvidia-t4` | GPU type (`nvidia-t4`, `nvidia-l4`, `nvidia-a10g`) |
+| `--instance-size` | `x1` | Instance size (`x1`, `x2`, `x4`) |
+| `--region` | `us-east-1` | Cloud region |
+| `--vendor` | `aws` | Cloud vendor (`aws`, `azure`) |
+| `--adapter` | None | HF Hub adapter repo to load at startup |
+| `--scale-to-zero` | `15` | Minutes before scaling to zero (0 to disable) |
+| `--namespace` | your username | HF namespace or org |
+
+### Environment Variables
+
+The container accepts these environment variables (set via HF portal or deploy script):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MODEL_PATH` | `/repository` | Path to model weights |
+| `MODEL_KEY` | `lfm2.5-1.2b-thinking` | Model registry key |
+| `ADAPTER_PATH` | None | HF Hub adapter repo ID or local path |
+| `PORT` | `80` | Server port |
+| `DEVICE_MAP` | `auto` | Device placement |
+| `DTYPE` | None | Override torch dtype |
+| `USE_FLASH_ATTN` | `false` | Enable Flash Attention 2 |
+| `MCP_CONFIG` | None | Path to MCP server config |
+| `N_GPU_LAYERS` | `99` | GPU layers for GGUF backend |
+| `N_CTX` | `128000` | Context window for GGUF backend |
+
+### GPU Recommendations
+
+| Model | Min GPU | Recommended |
+|-------|---------|-------------|
+| LFM2.5-1.2B (no MCP tools) | T4 (16GB) | T4 |
+| LFM2.5-1.2B (with MCP tools) | L4 (24GB) | L4 |
+| Larger models (8B+) | A10G (24GB) | A100 (80GB) |
+
+The 29 Aiera MCP tool schemas add ~13K tokens to the system prompt. With T4 (16GB), this causes CUDA OOM errors. Use L4 (24GB) or larger when MCP tools are enabled.
+
+### Accessing the Deployed Endpoint
+
+Once deployed, the endpoint URL hosts both the API and the web UI:
+
+- **Web UI:** `https://YOUR_ENDPOINT_URL/`
+- **Health check:** `https://YOUR_ENDPOINT_URL/health`
+- **Chat API:** `https://YOUR_ENDPOINT_URL/v1/chat/completions`
+
+```bash
+curl https://YOUR_ENDPOINT_URL/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Hello"}], "stream": true}'
+```
+
 ## Verbose Logging
 
 Add `-v` to any command for debug-level logging:

@@ -148,6 +148,7 @@ class ModelManager:
         device_map: str = "auto",
         dtype: str | None = None,
         use_flash_attn: bool = False,
+        adapter_path: str | Path | None = None,
     ) -> None:
         """Load a transformers model into memory.
 
@@ -155,6 +156,7 @@ class ModelManager:
             model_key: Key in MODEL_REGISTRY to look up model spec.
             model_path: Optional local path to load weights from (e.g. /repository
                         on HF Inference Endpoints). Falls back to spec.repo_id.
+            adapter_path: Optional path to a LoRA adapter directory to merge on load.
         """
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -162,7 +164,7 @@ class ModelManager:
         spec = get_model_spec(model_key)
         load_from = model_path or spec.repo_id
 
-        if self._loaded_spec and self._loaded_spec.repo_id == spec.repo_id and model_path is None:
+        if self._loaded_spec and self._loaded_spec.repo_id == spec.repo_id and model_path is None and not adapter_path:
             logger.info("%s is already loaded", spec.name)
             return
 
@@ -187,6 +189,22 @@ class ModelManager:
             load_from, cache_dir=None if model_path else str(self.cache_dir)
         )
         self._hf_model = AutoModelForCausalLM.from_pretrained(**kwargs)
+
+        if adapter_path:
+            import os
+            from peft import PeftModel
+            adapter_str = str(adapter_path)
+            logger.info("Loading LoRA adapter from %s ...", adapter_str)
+            # If adapter_path looks like a Hub repo ID (contains '/'), pass token for private repos
+            peft_kwargs: dict = {}
+            if "/" in adapter_str and not os.path.exists(adapter_str):
+                hf_token = os.environ.get("HF_TOKEN")
+                if hf_token:
+                    peft_kwargs["token"] = hf_token
+            self._hf_model = PeftModel.from_pretrained(self._hf_model, adapter_str, **peft_kwargs)
+            self._hf_model = self._hf_model.merge_and_unload()
+            logger.info("LoRA adapter merged successfully")
+
         self._loaded_spec = spec
         self._backend = BACKEND_TRANSFORMERS
         self._model_name = spec.name
@@ -541,27 +559,35 @@ class ModelManager:
                 yield {"type": "done"}
                 return
 
-            # Append the assistant's raw response
-            working_messages.append({"role": "assistant", "content": raw_output.replace("<|im_end|>", "").strip()})
+            # Append the assistant's raw response (strip tool call markup and special tokens)
+            import re as _re
+            clean_output = raw_output.replace("<|im_end|>", "")
+            clean_output = _re.sub(r"<tool_call>\s*\{.*?\}\s*</tool_call>", "", clean_output, flags=_re.DOTALL)
+            clean_output = _re.sub(r"\<\|tool_call_start\|>.*?<\|tool_call_end\|>", "", clean_output, flags=_re.DOTALL)
+            working_messages.append({"role": "assistant", "content": clean_output.strip()})
 
-            # Extract model-generated status lines preceding each tool call
-            # The model is instructed to write a line like "Looking up NFLX earnings..."
-            # right before the [tool_call(...)] bracket.
+            # Extract model-generated status lines preceding each tool call.
+            # The model writes a line like "Looking up NFLX earnings..." before the tool call.
+            # Supports both [func_name(...)] and <tool_call>...</tool_call> formats.
             post_think = raw_output
             if "</think>" in post_think:
                 post_think = post_think.split("</think>", 1)[1]
             logger.info("generate_with_tools: post-think text: %.300s", post_think)
             tool_status_lines = {}
             for i, call in enumerate(tool_calls):
-                # Find text before this tool call's bracket
-                bracket = f"[{call['name']}("
-                pos = post_think.find(bracket)
-                logger.info("generate_with_tools: looking for %r in post_think, pos=%d", bracket, pos)
+                # Try <tool_call> format first, then bracket format
+                markers = [f"<tool_call>", f"[{call['name']}("]
+                pos = -1
+                for marker in markers:
+                    pos = post_think.find(marker)
+                    if pos >= 0:
+                        break
+                logger.info("generate_with_tools: looking for tool call marker in post_think, pos=%d", pos)
                 if pos > 0:
                     preceding = post_think[:pos].strip().rsplit("\n", 1)
                     status_line = preceding[-1].strip() if preceding else ""
                     logger.info("generate_with_tools: extracted status line: %r", status_line)
-                    if status_line and not status_line.startswith("["):
+                    if status_line and not status_line.startswith(("[", "<")):
                         tool_status_lines[i] = status_line
 
             # Execute each tool call and append results

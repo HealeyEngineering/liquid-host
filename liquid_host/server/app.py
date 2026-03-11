@@ -171,10 +171,13 @@ async def chat_completions(request: ChatCompletionRequest):
         "Flag risks, assumptions, and areas of uncertainty clearly. "
         "Avoid speculation and retail-oriented language. "
         "If you have access to tools, use them proactively to retrieve relevant data before answering.\n\n"
-        "Keep your thinking process concise — briefly identify what is needed and act. "
-        "Do not deliberate at length or repeat yourself in your thinking.\n\n"
+        "IMPORTANT: Keep your <think> block extremely brief — 2-3 short sentences maximum. "
+        "State only what you need to do, then do it immediately. No analysis, no weighing options, "
+        "no restating the question, no self-dialogue in thinking. Just act.\n\n"
+        "You may call multiple tools in a single response — there is no limit. "
+        "Call as many as needed to fully answer the question.\n\n"
         "When calling a tool, write a short user-friendly status message on the line immediately "
-        "before the tool call describing what you are doing, e.g.:\n"
+        "before each tool call describing what you are doing, e.g.:\n"
         "Looking up recent NFLX earnings events...\n"
         "[find_events(bloomberg_ticker='NFLX', event_type='earnings')]\n"
         "This status line will be shown to the user while the tool runs."
@@ -479,6 +482,161 @@ async def mcp_reconnect():
     }
 
 
+# ── Tool debugger endpoints ────────────────────────────────────────
+
+
+@app.get("/tools", include_in_schema=False)
+async def tools_page():
+    return FileResponse(str(_STATIC_DIR / "tools.html"))
+
+
+@app.get("/api/tools")
+async def list_tools():
+    """List all available MCP tools with their schemas."""
+    if not _mcp or not _mcp.is_connected:
+        return {"tools": []}
+    return {
+        "tools": [
+            {
+                "name": t.name,
+                "description": t.description,
+                "input_schema": t.input_schema,
+                "server": t.server_name,
+            }
+            for t in _mcp.tools
+        ]
+    }
+
+
+class ToolCallRequest(BaseModel):
+    name: str
+    arguments: dict
+
+
+@app.post("/api/tools/call")
+async def call_tool(request: ToolCallRequest):
+    """Execute a tool call and return the raw result."""
+    if not _mcp or not _mcp.is_connected:
+        raise HTTPException(503, "MCP not connected")
+    result = await _mcp.call_tool(request.name, request.arguments)
+    return {"tool": request.name, "arguments": request.arguments, "result": result}
+
+
+# ── Training data management endpoints ─────────────────────────────
+
+
+class TrainingDataConfig(BaseModel):
+    hf_repo: str | None = None
+    hf_token: str | None = None
+
+
+import os as _os
+
+_training_config: TrainingDataConfig = TrainingDataConfig(
+    hf_repo=_os.environ.get("TRAINING_HF_REPO"),
+    hf_token=_os.environ.get("HF_TOKEN"),
+)
+
+
+@app.get("/training", include_in_schema=False)
+async def training_page():
+    return FileResponse(str(_STATIC_DIR / "training.html"))
+
+
+@app.get("/api/training/config")
+async def get_training_config():
+    return {
+        "hf_repo": _training_config.hf_repo,
+        "configured": bool(_training_config.hf_repo and _training_config.hf_token),
+    }
+
+
+@app.post("/api/training/config")
+async def set_training_config(config: TrainingDataConfig):
+    _training_config.hf_repo = config.hf_repo
+    _training_config.hf_token = config.hf_token
+    return {"status": "ok", "hf_repo": config.hf_repo}
+
+
+@app.get("/api/training/examples")
+async def list_training_examples():
+    """Pull training examples from HF dataset repo."""
+    if not _training_config.hf_repo or not _training_config.hf_token:
+        raise HTTPException(400, "HF repo and token not configured. POST to /api/training/config first.")
+
+    from datasets import load_dataset
+
+    try:
+        ds = load_dataset(
+            _training_config.hf_repo,
+            split="train",
+            token=_training_config.hf_token,
+        )
+    except Exception as e:
+        raise HTTPException(502, f"Failed to load dataset: {e}")
+
+    examples = []
+    for i, row in enumerate(ds):
+        msgs = row.get("messages", [])
+        user_msg = next((m["content"] for m in msgs if m["role"] == "user"), "")
+        has_tools = any("<tool_call>" in m.get("content", "") for m in msgs if m["role"] == "assistant")
+        user_turns = sum(1 for m in msgs if m["role"] == "user")
+        examples.append({
+            "id": i,
+            "preview": user_msg[:120],
+            "messages": msgs,
+            "num_messages": len(msgs),
+            "num_turns": user_turns,
+            "has_tools": has_tools,
+        })
+
+    return {"total": len(examples), "examples": examples}
+
+
+class UpdateExampleRequest(BaseModel):
+    id: int
+    messages: list[dict]
+
+
+class AddExampleRequest(BaseModel):
+    messages: list[dict]
+
+
+class DeleteExampleRequest(BaseModel):
+    id: int
+
+
+class SyncRequest(BaseModel):
+    examples: list[dict]
+
+
+@app.post("/api/training/sync")
+async def sync_training_data(request: SyncRequest):
+    """Push the full set of examples back to HF Hub."""
+    if not _training_config.hf_repo or not _training_config.hf_token:
+        raise HTTPException(400, "HF repo and token not configured.")
+
+    import json as _json
+    from datasets import Dataset
+
+    records = []
+    for ex in request.examples:
+        records.append({"messages": ex["messages"]})
+
+    ds = Dataset.from_list(records)
+    try:
+        ds.push_to_hub(
+            _training_config.hf_repo,
+            split="train",
+            private=False,
+            token=_training_config.hf_token,
+        )
+    except Exception as e:
+        raise HTTPException(502, f"Failed to push dataset: {e}")
+
+    return {"status": "synced", "total": len(records)}
+
+
 # ── Factory ────────────────────────────────────────────────────────
 
 
@@ -493,6 +651,7 @@ def create_app(
     preload_model: str | None = None,
     preload_model_path: str | None = None,
     preload_gguf: str | None = None,
+    adapter_path: str | None = None,
     device_map: str = "auto",
     dtype: str | None = None,
     use_flash_attn: bool = False,
@@ -515,6 +674,7 @@ def create_app(
             device_map=device_map,
             dtype=dtype,
             use_flash_attn=use_flash_attn,
+            adapter_path=adapter_path,
         )
 
     @app.on_event("startup")

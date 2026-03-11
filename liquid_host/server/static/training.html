@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Host — Training Data</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3347;
+    --text: #e1e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-dim: #4a62b3;
+    --error: #ff6b6b;
+    --success: #51cf66;
+    --warning: #ffd43b;
+    --user-bg: #1e2a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ─────────────────────────────── */
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  header h1 a { color: var(--text); text-decoration: none; }
+  header h1 a:hover { color: var(--accent); }
+  header h1 span { color: var(--text-dim); font-weight: 400; }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .btn:hover { border-color: var(--accent-dim); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-dim); }
+  .btn.danger { border-color: #4a2a2a; color: var(--error); }
+  .btn.danger:hover { background: #2a1a1a; }
+
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .badge.synced { background: #1a3a2a; border: 1px solid #2a5a3a; color: var(--success); }
+  .badge.modified { background: #3a3a1a; border: 1px solid #5a5a2a; color: var(--warning); }
+  .badge.count { background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); }
+
+  /* ── Config panel ─────────────────────────── */
+
+  .config-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-shrink: 0;
+  }
+
+  .config-panel .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .config-panel label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .config-panel input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .config-panel input:focus { outline: none; border-color: var(--accent-dim); }
+
+  /* ── Main layout ─────────────────────────── */
+
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar (example list) ──────────────── */
+
+  .sidebar {
+    width: 360px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+  .sidebar-header span { font-size: 13px; color: var(--text-dim); }
+
+  .filter-bar {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-bar input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+  .filter-bar input:focus { outline: none; border-color: var(--accent-dim); }
+
+  .example-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .example-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .example-item:hover { background: var(--surface2); }
+  .example-item.selected { background: var(--user-bg); border-left: 3px solid var(--accent); }
+  .example-item .preview {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .example-item .meta {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 3px;
+    display: flex;
+    gap: 10px;
+  }
+  .example-item .meta .tool-tag {
+    color: var(--accent);
+  }
+
+  /* ── Editor pane ─────────────────────────── */
+
+  .editor-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .editor-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .editor-header .title { font-size: 14px; font-weight: 600; }
+
+  .editor-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .messages-editor {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .msg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .msg-header .role-select {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .msg-header .role-select option { background: var(--surface2); color: var(--text); }
+
+  .msg-header .msg-actions { display: flex; gap: 6px; }
+  .msg-header .msg-actions button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+  }
+  .msg-header .msg-actions button:hover { color: var(--text); }
+
+  .msg-content {
+    padding: 0;
+  }
+  .msg-content textarea {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 60px;
+  }
+  .msg-content textarea:focus { outline: none; }
+
+  .add-msg-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  /* ── Toast notifications ─────────────────── */
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+  }
+  .toast.success { border-color: #2a5a3a; color: var(--success); }
+  .toast.error { border-color: #4a2a2a; color: var(--error); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Loading overlay ─────────────────────── */
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 17, 23, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    color: var(--text);
+    font-size: 14px;
+  }
+  .loading-overlay.hidden { display: none; }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Liquid Host</a> <span>/ Training Data</span></h1>
+  <div class="header-actions">
+    <a href="/tools" style="color: var(--text-dim); text-decoration: none; font-size: 13px; margin-right: 8px;">Tools</a>
+    <span id="sync-badge" class="badge synced" style="display:none"></span>
+    <span id="count-badge" class="badge count">0 examples</span>
+    <button class="btn" id="add-btn" disabled>+ Add Example</button>
+    <button class="btn primary" id="sync-btn" disabled>Sync to HF</button>
+  </div>
+</header>
+
+<div class="config-panel" id="config-panel">
+  <div class="field">
+    <label>HF Dataset Repo</label>
+    <input type="text" id="cfg-repo" placeholder="user/dataset-name" style="width: 280px;">
+  </div>
+  <div class="field">
+    <label>HF Token</label>
+    <input type="password" id="cfg-token" placeholder="hf_..." style="width: 260px;">
+  </div>
+  <button class="btn primary" id="connect-btn">Connect</button>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>Examples</span>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="filter-input" placeholder="Filter examples...">
+    </div>
+    <div class="example-list" id="example-list"></div>
+  </div>
+
+  <div class="editor-pane">
+    <div class="editor-header" id="editor-header" style="display:none">
+      <div class="title" id="editor-title">Example #1</div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="duplicate-btn">Duplicate</button>
+        <button class="btn danger" id="delete-btn">Delete</button>
+      </div>
+    </div>
+    <div class="editor-empty" id="editor-empty">
+      Connect to a HF dataset to start editing
+    </div>
+    <div class="messages-editor" id="messages-editor" style="display:none"></div>
+  </div>
+</div>
+
+<div class="loading-overlay hidden" id="loading">
+  <div class="spinner"></div>
+  <span id="loading-text">Loading...</span>
+</div>
+
+<script>
+const API = window.location.origin;
+
+let examples = [];
+let selectedId = null;
+let modified = false;
+
+// DOM refs
+const exampleList = document.getElementById("example-list");
+const messagesEditor = document.getElementById("messages-editor");
+const editorEmpty = document.getElementById("editor-empty");
+const editorHeader = document.getElementById("editor-header");
+const editorTitle = document.getElementById("editor-title");
+const countBadge = document.getElementById("count-badge");
+const syncBadge = document.getElementById("sync-badge");
+const filterInput = document.getElementById("filter-input");
+const addBtn = document.getElementById("add-btn");
+const syncBtn = document.getElementById("sync-btn");
+const deleteBtn = document.getElementById("delete-btn");
+const duplicateBtn = document.getElementById("duplicate-btn");
+const connectBtn = document.getElementById("connect-btn");
+const cfgRepo = document.getElementById("cfg-repo");
+const cfgToken = document.getElementById("cfg-token");
+const loadingEl = document.getElementById("loading");
+const loadingText = document.getElementById("loading-text");
+
+// ── Loading & Toast ──────────────────────
+
+function showLoading(text) {
+  loadingText.textContent = text;
+  loadingEl.classList.remove("hidden");
+}
+
+function hideLoading() {
+  loadingEl.classList.add("hidden");
+}
+
+function toast(msg, type = "success") {
+  const el = document.createElement("div");
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── Mark modified ────────────────────────
+
+function markModified() {
+  modified = true;
+  syncBadge.textContent = "Modified";
+  syncBadge.className = "badge modified";
+  syncBadge.style.display = "";
+}
+
+function markSynced() {
+  modified = false;
+  syncBadge.textContent = "Synced";
+  syncBadge.className = "badge synced";
+  syncBadge.style.display = "";
+  setTimeout(() => { if (!modified) syncBadge.style.display = "none"; }, 3000);
+}
+
+// ── Connect ──────────────────────────────
+
+connectBtn.addEventListener("click", async () => {
+  const repo = cfgRepo.value.trim();
+  const token = cfgToken.value.trim();
+  if (!repo || !token) { toast("Repo and token required", "error"); return; }
+
+  showLoading("Configuring...");
+  try {
+    await fetch(`${API}/api/training/config`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hf_repo: repo, hf_token: token }),
+    });
+    await loadExamples();
+    addBtn.disabled = false;
+    syncBtn.disabled = false;
+    toast(`Connected to ${repo}`);
+  } catch (e) {
+    toast(`Connection failed: ${e.message}`, "error");
+  } finally {
+    hideLoading();
+  }
+});
+
+// ── Load examples from HF ────────────────
+
+async function loadExamples() {
+  showLoading("Loading training data from HuggingFace...");
+  try {
+    const res = await fetch(`${API}/api/training/examples`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+    const data = await res.json();
+    examples = data.examples;
+    countBadge.textContent = `${examples.length} examples`;
+    renderList();
+    editorEmpty.textContent = "Select an example to edit";
+  } catch (e) {
+    toast(`Failed to load: ${e.message}`, "error");
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── Render sidebar list ──────────────────
+
+function renderList(filter = "") {
+  const lc = filter.toLowerCase();
+  exampleList.innerHTML = "";
+  examples.forEach((ex, i) => {
+    if (lc && !ex.preview.toLowerCase().includes(lc)) return;
+
+    const div = document.createElement("div");
+    div.className = "example-item" + (ex.id === selectedId ? " selected" : "");
+    div.innerHTML = `
+      <div class="preview">${escHtml(ex.preview || "(empty)")}</div>
+      <div class="meta">
+        <span>${ex.num_turns} turn${ex.num_turns > 1 ? "s" : ""}</span>
+        <span>${ex.num_messages} msgs</span>
+        ${ex.has_tools ? '<span class="tool-tag">tools</span>' : ""}
+      </div>
+    `;
+    div.addEventListener("click", () => selectExample(ex.id));
+    exampleList.appendChild(div);
+  });
+}
+
+filterInput.addEventListener("input", () => renderList(filterInput.value));
+
+function escHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Select & render example ──────────────
+
+function selectExample(id) {
+  selectedId = id;
+  renderList(filterInput.value);
+  renderEditor();
+}
+
+function renderEditor() {
+  const ex = examples.find(e => e.id === selectedId);
+  if (!ex) {
+    editorHeader.style.display = "none";
+    messagesEditor.style.display = "none";
+    editorEmpty.style.display = "";
+    return;
+  }
+
+  editorEmpty.style.display = "none";
+  editorHeader.style.display = "";
+  messagesEditor.style.display = "";
+  editorTitle.textContent = `Example #${ex.id + 1}`;
+
+  messagesEditor.innerHTML = "";
+
+  ex.messages.forEach((msg, mi) => {
+    const block = createMsgBlock(msg, mi, ex);
+    messagesEditor.appendChild(block);
+  });
+
+  // Add message buttons
+  const addRow = document.createElement("div");
+  addRow.className = "add-msg-row";
+  ["user", "assistant", "tool"].forEach(role => {
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = `+ ${role}`;
+    btn.addEventListener("click", () => {
+      ex.messages.push({ role, content: "" });
+      updateExampleMeta(ex);
+      markModified();
+      renderEditor();
+      // Focus the new textarea
+      const textareas = messagesEditor.querySelectorAll("textarea");
+      if (textareas.length) textareas[textareas.length - 1].focus();
+    });
+    addRow.appendChild(btn);
+  });
+  messagesEditor.appendChild(addRow);
+}
+
+function createMsgBlock(msg, index, example) {
+  const block = document.createElement("div");
+  block.className = "msg-block";
+
+  const header = document.createElement("div");
+  header.className = "msg-header";
+
+  const select = document.createElement("select");
+  select.className = "role-select";
+  ["user", "assistant", "tool", "system"].forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r;
+    opt.textContent = r.toUpperCase();
+    if (r === msg.role) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener("change", () => {
+    msg.role = select.value;
+    updateExampleMeta(example);
+    markModified();
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "msg-actions";
+
+  if (index > 0) {
+    const upBtn = document.createElement("button");
+    upBtn.textContent = "\u2191";
+    upBtn.title = "Move up";
+    upBtn.addEventListener("click", () => {
+      [example.messages[index - 1], example.messages[index]] =
+        [example.messages[index], example.messages[index - 1]];
+      markModified();
+      renderEditor();
+    });
+    actions.appendChild(upBtn);
+  }
+
+  if (index < example.messages.length - 1) {
+    const downBtn = document.createElement("button");
+    downBtn.textContent = "\u2193";
+    downBtn.title = "Move down";
+    downBtn.addEventListener("click", () => {
+      [example.messages[index], example.messages[index + 1]] =
+        [example.messages[index + 1], example.messages[index]];
+      markModified();
+      renderEditor();
+    });
+    actions.appendChild(downBtn);
+  }
+
+  const rmBtn = document.createElement("button");
+  rmBtn.textContent = "\u00d7";
+  rmBtn.title = "Remove message";
+  rmBtn.addEventListener("click", () => {
+    example.messages.splice(index, 1);
+    updateExampleMeta(example);
+    markModified();
+    renderEditor();
+  });
+  actions.appendChild(rmBtn);
+
+  header.appendChild(select);
+  header.appendChild(actions);
+
+  const content = document.createElement("div");
+  content.className = "msg-content";
+  const textarea = document.createElement("textarea");
+  textarea.value = msg.content;
+  textarea.rows = Math.max(3, msg.content.split("\n").length);
+  textarea.addEventListener("input", () => {
+    msg.content = textarea.value;
+    updateExampleMeta(example);
+    markModified();
+  });
+  content.appendChild(textarea);
+
+  block.appendChild(header);
+  block.appendChild(content);
+  return block;
+}
+
+function updateExampleMeta(ex) {
+  ex.preview = (ex.messages.find(m => m.role === "user")?.content || "").slice(0, 120);
+  ex.num_messages = ex.messages.length;
+  ex.num_turns = ex.messages.filter(m => m.role === "user").length;
+  ex.has_tools = ex.messages.some(m => m.role === "assistant" && (m.content || "").includes("<tool_call>"));
+  renderList(filterInput.value);
+}
+
+// ── Add example ──────────────────────────
+
+addBtn.addEventListener("click", () => {
+  const newEx = {
+    id: examples.length,
+    preview: "",
+    messages: [
+      { role: "user", content: "" },
+      { role: "assistant", content: "" },
+    ],
+    num_messages: 2,
+    num_turns: 1,
+    has_tools: false,
+  };
+  examples.push(newEx);
+  countBadge.textContent = `${examples.length} examples`;
+  markModified();
+  selectExample(newEx.id);
+  // Scroll sidebar to bottom
+  exampleList.scrollTop = exampleList.scrollHeight;
+});
+
+// ── Delete example ───────────────────────
+
+deleteBtn.addEventListener("click", () => {
+  if (selectedId === null) return;
+  if (!confirm("Delete this example?")) return;
+
+  examples = examples.filter(e => e.id !== selectedId);
+  // Re-index
+  examples.forEach((e, i) => e.id = i);
+  countBadge.textContent = `${examples.length} examples`;
+  selectedId = null;
+  markModified();
+  renderList(filterInput.value);
+  renderEditor();
+});
+
+// ── Duplicate example ────────────────────
+
+duplicateBtn.addEventListener("click", () => {
+  const ex = examples.find(e => e.id === selectedId);
+  if (!ex) return;
+
+  const copy = {
+    id: examples.length,
+    preview: ex.preview,
+    messages: JSON.parse(JSON.stringify(ex.messages)),
+    num_messages: ex.num_messages,
+    num_turns: ex.num_turns,
+    has_tools: ex.has_tools,
+  };
+  examples.push(copy);
+  countBadge.textContent = `${examples.length} examples`;
+  markModified();
+  selectExample(copy.id);
+  exampleList.scrollTop = exampleList.scrollHeight;
+  toast("Example duplicated");
+});
+
+// ── Sync to HF ──────────────────────────
+
+syncBtn.addEventListener("click", async () => {
+  if (!examples.length) { toast("No examples to sync", "error"); return; }
+
+  showLoading("Syncing to HuggingFace...");
+  try {
+    const payload = examples.map(e => ({ messages: e.messages }));
+    const res = await fetch(`${API}/api/training/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ examples: payload }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || res.statusText);
+    }
+    const data = await res.json();
+    markSynced();
+    toast(`Synced ${data.total} examples to HuggingFace`);
+  } catch (e) {
+    toast(`Sync failed: ${e.message}`, "error");
+  } finally {
+    hideLoading();
+  }
+});
+
+// ── Keyboard shortcuts ───────────────────
+
+document.addEventListener("keydown", (e) => {
+  // Ctrl/Cmd+S to sync
+  if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+    e.preventDefault();
+    if (!syncBtn.disabled) syncBtn.click();
+  }
+});
+
+// ── Init: check config ───────────────────
+
+(async () => {
+  try {
+    const res = await fetch(`${API}/api/training/config`);
+    const cfg = await res.json();
+    if (cfg.hf_repo) {
+      cfgRepo.value = cfg.hf_repo;
+    }
+    if (cfg.configured) {
+      // Backend already has repo + token — hide connect panel and auto-load
+      document.getElementById("config-panel").style.display = "none";
+      await loadExamples();
+    }
+  } catch {}
+})();
+</script>
+</body>
+</html>
