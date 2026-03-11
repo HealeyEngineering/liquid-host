@@ -486,13 +486,17 @@ class ModelManager:
         logger.info("generate_with_tools [%s]: starting — %d MCP tools, max_rounds=%d", self._backend, tool_count, max_tool_rounds)
         yield {"type": "status", "content": f"Connected to MCP ({tool_count} tools available)"}
 
+        did_tool_call = False  # Track whether we've executed any tool calls
+
         for _round in range(max_tool_rounds):
             logger.info("generate_with_tools: round %d/%d — %d messages in context", _round + 1, max_tool_rounds, len(working_messages))
             yield {"type": "status", "content": f"Generating response (round {_round + 1})..."}
 
             # Stream the response, collecting full text for tool-call parsing.
             # Thinking tokens are emitted in batches as they arrive.
-            # Content tokens are buffered until we know whether tool calls exist.
+            # Content tokens are buffered on first round (may contain tool calls),
+            # but streamed directly on subsequent rounds (final answer after tools).
+            stream_directly = did_tool_call  # After tool calls, stream the final answer
             full_tokens: list[str] = []
             thinking_buffer: list[str] = []
             content_buffer: list[str] = []
@@ -504,7 +508,7 @@ class ModelManager:
 
                 async for token, _full in self._async_stream_raw(
                     working_messages, config,
-                    tools=tools_schema,
+                    tools=tools_schema if not stream_directly else None,
                     skip_special_tokens=skip,
                 ):
                     full_tokens.append(token)
@@ -531,8 +535,12 @@ class ModelManager:
                                 thinking_buffer = []
                             continue
 
-                    # Buffer content tokens (don't emit yet — may contain tool calls)
-                    content_buffer.append(token)
+                    if stream_directly:
+                        # Final answer after tool calls — stream tokens immediately
+                        yield {"type": "token", "content": token}
+                    else:
+                        # First round — buffer content tokens (may contain tool calls)
+                        content_buffer.append(token)
 
             except Exception as e:
                 logger.error("generate_with_tools: streaming failed — %s", e)
@@ -542,6 +550,11 @@ class ModelManager:
             # Flush any remaining thinking buffer
             if thinking_buffer:
                 yield {"type": "thinking", "content": "".join(thinking_buffer)}
+
+            # If we streamed directly (final answer), we're done
+            if stream_directly:
+                yield {"type": "done"}
+                return
 
             raw_output = "".join(full_tokens)
             logger.info("generate_with_tools: raw output (%d chars): %.500s", len(raw_output), raw_output)
@@ -591,6 +604,7 @@ class ModelManager:
                         tool_status_lines[i] = status_line
 
             # Execute each tool call and append results
+            did_tool_call = True
             for i, call in enumerate(tool_calls):
                 logger.info("generate_with_tools: round %d, call %d/%d — %s(%s)", _round + 1, i + 1, len(tool_calls), call["name"], call["arguments"])
                 status_msg = tool_status_lines.get(i, f"Calling tool: {call['name']}...")

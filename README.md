@@ -240,7 +240,7 @@ Create or edit `mcp_servers.json` in the project root:
   "servers": [
     {
       "name": "aiera",
-      "url": "https://mcp-pub.aiera.com?api_key=YOUR_API_KEY",
+      "url": "https://mcp-pub.dev.aiera.com?api_key=YOUR_API_KEY",
       "transport": "streamable_http",
       "enabled": true,
       "description": "Aiera financial data and research platform"

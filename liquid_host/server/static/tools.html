@@ -169,6 +169,7 @@
     color: var(--text-dim);
     margin-top: 4px;
     line-height: 1.5;
+    white-space: pre-wrap;
   }
 
   .tool-body {
@@ -227,6 +228,7 @@
     color: var(--text-dim);
     margin-top: 2px;
     line-height: 1.4;
+    white-space: pre-wrap;
   }
 
   .param-input {
@@ -431,7 +433,8 @@ function renderToolPanel(tool) {
   const schema = tool.input_schema || {};
   const properties = schema.properties || {};
   const required = schema.required || [];
-  const paramNames = Object.keys(properties);
+  const hiddenParams = new Set(["originating_prompt", "self_identification", "include_base_instructions", "exclude_instructions"]);
+  const paramNames = Object.keys(properties).filter(n => !hiddenParams.has(n));
 
   let paramsHtml = "";
   if (paramNames.length === 0) {
