@@ -482,6 +482,37 @@ async def mcp_reconnect():
     }
 
 
+@app.get("/mcp/api-key")
+async def mcp_get_api_key():
+    """Return the current MCP API key (masked for display)."""
+    if not _mcp:
+        return {"api_key": None, "masked": None}
+    key = _mcp.api_key
+    if not key:
+        return {"api_key": None, "masked": None}
+    masked = key[:4] + "..." + key[-4:] if len(key) > 8 else "****"
+    return {"api_key": key, "masked": masked}
+
+
+class ApiKeyRequest(BaseModel):
+    api_key: str
+
+
+@app.post("/mcp/api-key")
+async def mcp_set_api_key(request: ApiKeyRequest):
+    """Update the MCP API key and reconnect."""
+    global _mcp
+    if _mcp:
+        await _mcp.disconnect_all()
+    _mcp = McpClientManager()
+    await _mcp.connect_all(api_key=request.api_key)
+    return {
+        "status": "reconnected",
+        "tools": [t.name for t in _mcp.tools],
+        "tool_count": len(_mcp.tools),
+    }
+
+
 # ── Tool debugger endpoints ────────────────────────────────────────
 
 

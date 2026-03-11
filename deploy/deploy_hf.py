@@ -50,6 +50,7 @@ def main():
     parser.add_argument("--namespace", default=None, help="HF namespace (default: your username, or use an org name)")
     parser.add_argument("--hf-token", default=None, help="HF token to pass to the endpoint (needed for private adapter repos)")
     parser.add_argument("--training-repo", default=None, help="HF dataset repo for training data editor (e.g. user/project-data)")
+    parser.add_argument("--mcp-api-key", default=None, help="API key for MCP server (e.g. Aiera API key)")
     args = parser.parse_args()
 
     # Verify auth
@@ -99,6 +100,7 @@ def main():
             **({"ADAPTER_PATH": args.adapter} if args.adapter else {}),
             **({"HF_TOKEN": args.hf_token} if args.hf_token else {}),
             **({"TRAINING_HF_REPO": args.training_repo} if args.training_repo else {}),
+            **({"MCP_API_KEY": args.mcp_api_key} if args.mcp_api_key else {}),
         },
     )
 

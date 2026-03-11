@@ -370,6 +370,14 @@
       <option value="false">Off</option>
     </select>
   </div>
+  <div class="setting-group">
+    <label>MCP API Key</label>
+    <div style="display: flex; gap: 6px; align-items: center;">
+      <input type="password" id="opt-api-key" placeholder="(loading...)" style="width: 220px;">
+      <button id="save-api-key-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;">Save</button>
+    </div>
+    <span id="api-key-status" style="font-size: 11px; color: var(--text-dim);"></span>
+  </div>
 </div>
 
 <div class="chat-container" id="chat-container">
@@ -447,6 +455,51 @@ async function pollStatus() {
 
 pollStatus();
 setInterval(pollStatus, 5000);
+
+// ── MCP API Key ─────────────────────────
+
+const apiKeyInput = document.getElementById("opt-api-key");
+const saveApiKeyBtn = document.getElementById("save-api-key-btn");
+const apiKeyStatus = document.getElementById("api-key-status");
+
+async function loadApiKey() {
+  try {
+    const res = await fetch(`${API_BASE}/mcp/api-key`);
+    const data = await res.json();
+    if (data.api_key) {
+      apiKeyInput.value = data.api_key;
+      apiKeyInput.placeholder = data.masked || "****";
+    } else {
+      apiKeyInput.placeholder = "(not set)";
+    }
+  } catch { apiKeyInput.placeholder = "(unavailable)"; }
+}
+
+saveApiKeyBtn.addEventListener("click", async () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) return;
+  saveApiKeyBtn.disabled = true;
+  apiKeyStatus.textContent = "Reconnecting...";
+  apiKeyStatus.style.color = "var(--accent)";
+  try {
+    const res = await fetch(`${API_BASE}/mcp/api-key`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: key }),
+    });
+    const data = await res.json();
+    apiKeyStatus.textContent = `Connected — ${data.tool_count} tools`;
+    apiKeyStatus.style.color = "var(--success)";
+    pollStatus();
+  } catch (e) {
+    apiKeyStatus.textContent = `Error: ${e.message}`;
+    apiKeyStatus.style.color = "var(--error)";
+  } finally {
+    saveApiKeyBtn.disabled = false;
+  }
+});
+
+loadApiKey();
 
 // ── Chat ─────────────────────────────────
 

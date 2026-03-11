@@ -351,7 +351,10 @@
 
 <header>
   <h1><a href="/">Liquid Host</a> <span>/ Tool Debugger</span></h1>
-  <div class="nav-links">
+  <div class="nav-links" style="align-items: center;">
+    <input type="password" id="api-key-input" placeholder="API Key" style="width: 180px; padding: 4px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 12px;">
+    <button id="save-key-btn" style="background: var(--accent); color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer;">Save</button>
+    <span id="key-status" style="font-size: 11px; color: var(--text-dim);"></span>
     <a href="/">Chat</a>
     <a href="/training">Training Data</a>
   </div>
@@ -645,8 +648,47 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// ── API Key ─────────────────────────────
+
+const apiKeyInput = document.getElementById("api-key-input");
+const saveKeyBtn = document.getElementById("save-key-btn");
+const keyStatus = document.getElementById("key-status");
+
+async function loadApiKey() {
+  try {
+    const res = await fetch(`${API}/mcp/api-key`);
+    const data = await res.json();
+    if (data.api_key) apiKeyInput.value = data.api_key;
+  } catch {}
+}
+
+saveKeyBtn.addEventListener("click", async () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) return;
+  saveKeyBtn.disabled = true;
+  keyStatus.textContent = "Reconnecting...";
+  keyStatus.style.color = "var(--accent)";
+  try {
+    const res = await fetch(`${API}/mcp/api-key`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api_key: key }),
+    });
+    const data = await res.json();
+    keyStatus.textContent = `${data.tool_count} tools`;
+    keyStatus.style.color = "var(--success)";
+    loadTools();
+  } catch (e) {
+    keyStatus.textContent = `Error`;
+    keyStatus.style.color = "var(--error)";
+  } finally {
+    saveKeyBtn.disabled = false;
+  }
+});
+
 // ── Init ─────────────────────────────────
 
+loadApiKey();
 loadTools();
 </script>
 </body>

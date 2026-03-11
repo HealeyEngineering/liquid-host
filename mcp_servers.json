@@ -2,7 +2,7 @@
   "servers": [
     {
       "name": "aiera",
-      "url": "https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015",
+      "url": "https://mcp-pub.dev.aiera.com",
       "transport": "streamable_http",
       "enabled": true,
       "description": "Aiera financial data and research platform"

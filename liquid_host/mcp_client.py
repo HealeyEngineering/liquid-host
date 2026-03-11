@@ -53,11 +53,49 @@ class McpClientManager:
         self._exit_stack: AsyncExitStack | None = None
         # Maps tool name → server name for routing calls
         self._tool_routing: dict[str, str] = {}
+        # Override API key (applied to all server URLs via ?api_key= param)
+        self._api_key_override: str | None = None
+
+    @property
+    def api_key(self) -> str | None:
+        """Return the current API key (override, env var, or from config)."""
+        import os
+        if self._api_key_override:
+            return self._api_key_override
+        env_key = os.environ.get("MCP_API_KEY")
+        if env_key:
+            return env_key
+        # Read from config file
+        if self._config_path.exists():
+            config = json.loads(self._config_path.read_text())
+            for entry in config.get("servers", []):
+                url = entry.get("url", "")
+                if "api_key=" in url:
+                    from urllib.parse import parse_qs, urlparse
+                    parsed = urlparse(url)
+                    params = parse_qs(parsed.query)
+                    keys = params.get("api_key", [])
+                    if keys:
+                        return keys[0]
+        return None
 
     # ── Lifecycle ──────────────────────────────────────────────────
 
-    async def connect_all(self) -> None:
-        """Read the config file and connect to all enabled servers."""
+    async def connect_all(self, api_key: str | None = None) -> None:
+        """Read the config file and connect to all enabled servers.
+
+        If *api_key* is provided it overrides the api_key query param in all
+        server URLs.  Falls back to the ``MCP_API_KEY`` environment variable.
+        """
+        import os
+        if api_key:
+            self._api_key_override = api_key
+        elif not self._api_key_override:
+            # Fall back to environment variable
+            env_key = os.environ.get("MCP_API_KEY")
+            if env_key:
+                self._api_key_override = env_key
+
         if not self._config_path.exists():
             logger.warning("MCP config not found at %s — no servers loaded", self._config_path)
             return
@@ -71,6 +109,14 @@ class McpClientManager:
             if not entry.get("enabled", True):
                 logger.info("Skipping disabled MCP server: %s", entry.get("name"))
                 continue
+            # Apply API key to the URL
+            if self._api_key_override:
+                from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+                parsed = urlparse(entry["url"])
+                params = parse_qs(parsed.query, keep_blank_values=True)
+                params["api_key"] = [self._api_key_override]
+                new_query = urlencode(params, doseq=True)
+                entry = {**entry, "url": urlunparse(parsed._replace(query=new_query))}
             try:
                 await self._connect_server(entry)
             except Exception:
