@@ -165,16 +165,15 @@ The server includes a built-in chat interface. Once the server is running, open 
 http://localhost:8000
 ```
 
-Features:
+The server includes three web interfaces:
 
-- **Streaming chat** — tokens appear in real time as the model generates them
-- **Multi-turn conversation** — full message history is maintained and sent with each request
-- **Settings panel** — click "Settings" in the top-right to adjust temperature, max tokens, min_p, repetition penalty, system prompt, and MCP tool toggle
-- **MCP status badge** — shows the number of connected MCP tools in the header
-- **Status indicator** — the header shows the loaded model name and a green/red dot for connection state (auto-refreshes every 5 seconds)
-- **Keyboard shortcuts** — Enter to send, Shift+Enter for a newline
+- **Chat** (`/`) — streaming chat with the model, multi-turn conversation, MCP tool calling with real-time status, configurable settings (temperature, max tokens, system prompt, tool toggle)
+- **Tool Debugger** (`/tools`) — test any MCP tool directly with a parameter form, see raw results, copy cURL commands
+- **Training Data Editor** (`/training`) — browse, edit, add, and delete training examples, sync changes back to HuggingFace Hub
 
-When MCP tools are enabled and connected, the UI shows real-time status messages as the model calls tools (e.g., "Calling tool: find_events..."), then streams the final answer token-by-token.
+All pages are cross-linked via nav in the header.
+
+When MCP tools are enabled and connected, the chat UI shows real-time status messages as the model calls tools (e.g., "Finding recent NFLX earnings..."), then streams the final answer token-by-token.
 
 ### 6. Interactive chat (no server needed)
 
@@ -279,16 +278,23 @@ liquid-host serve --gguf /path/to/model --mcp-config /path/to/mcp_servers.json
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/` | GET | Web chat UI |
+| `/tools` | GET | Tool debugger UI |
+| `/training` | GET | Training data editor UI |
 | `/health` | GET | Health check |
 | `/status` | GET | Server status, loaded model, and MCP info |
 | `/v1/models` | GET | List available models |
 | `/v1/chat/completions` | POST | Chat completions (OpenAI-compatible, supports streaming) |
-| `/load` | POST | Load a HuggingFace model: `{"model": "lfm2.5-1.2b-instruct"}` |
+| `/load` | POST | Load a HuggingFace model: `{"model": "lfm2-24b-a2b"}` |
 | `/load-gguf` | POST | Load a GGUF model: `{"path": "/path/to/model", "n_ctx": 4096}` |
 | `/unload` | POST | Unload the current model and free memory |
 | `/download` | POST | Download a model: `{"model": "lfm2-1.2b"}` |
 | `/mcp/status` | GET | MCP connection status and tool list |
 | `/mcp/reconnect` | POST | Reconnect to MCP servers (re-reads config) |
+| `/api/tools` | GET | List all MCP tools with JSON schemas |
+| `/api/tools/call` | POST | Execute a tool: `{"name": "find_events", "arguments": {...}}` |
+| `/api/training/config` | GET/POST | Get or set HF dataset config for training data |
+| `/api/training/examples` | GET | Pull training examples from HF dataset |
+| `/api/training/sync` | POST | Push edited examples back to HF Hub |
 
 ### Hot-swapping models
 
@@ -361,7 +367,7 @@ Each line is a JSON object with a `messages` array. Supports `user`, `assistant`
 {"messages": [{"role": "user", "content": "What were AAPL's Q3 results?"}, {"role": "assistant", "content": "<think>Look up AAPL earnings.</think>\nLooking up recent AAPL earnings...\n[find_events(bloomberg_ticker='AAPL:US', event_type='earnings')]"}, {"role": "tool", "content": "{\"events\": [...]}"}, {"role": "assistant", "content": "Apple reported Q3 revenue of $85.8B..."}]}
 ```
 
-See `data/training/aiera_tools.jsonl` for 23 examples covering Aiera MCP tool calls (earnings, financials, filings, transcripts, conferences, etc.).
+See `data/training/aiera_tools_v4.jsonl` for 286 examples covering all 39 Aiera MCP tools (earnings, financials, filings, transcripts, conferences, indexes, watchlists, sectors, Third Bridge, company docs, research metadata, web search, and more).
 
 ### Install Training Dependencies
 
@@ -382,7 +388,7 @@ pip install -e ".[remote-training]"
 Requires a CUDA GPU with sufficient VRAM.
 
 ```bash
-liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+liquid-host finetune lfm2-24b-a2b data/training/aiera_tools_v4.jsonl \
   --output ./finetune-output \
   --epochs 3 \
   --lora-rank 16 \
@@ -393,7 +399,7 @@ liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
 For QLoRA (4-bit quantized base model, reduces VRAM usage):
 
 ```bash
-liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+liquid-host finetune lfm2-24b-a2b data/training/aiera_tools_v4.jsonl \
   --quantize-4bit
 ```
 
@@ -406,9 +412,10 @@ No local GPU required. Launches a custom HF Space with a GPU backend that runs t
 ```bash
 export HF_TOKEN=hf_your_token_here
 
-liquid-host finetune lfm2.5-1.2b-thinking data/training/aiera_tools.jsonl \
+liquid-host finetune lfm2-24b-a2b data/training/aiera_tools_v4.jsonl \
   --remote \
-  --backend l4x1 \
+  --backend a100-large \
+  --quantize-4bit \
   --project-name my-finetune
 ```
 
@@ -453,13 +460,13 @@ Monitor training at the Space URL printed in the output. When complete, the adap
 **From a local adapter:**
 
 ```bash
-liquid-host serve --model lfm2.5-1.2b-thinking --adapter ./finetune-output/adapter
+liquid-host serve --model lfm2-24b-a2b --adapter ./finetune-output/adapter
 ```
 
 **From a Hub adapter (after remote training):**
 
 ```bash
-liquid-host serve --model lfm2.5-1.2b-thinking --adapter username/my-finetune
+liquid-host serve --model lfm2-24b-a2b --adapter username/my-finetune
 ```
 
 The adapter is merged into the base model at startup with no inference overhead.
@@ -497,13 +504,15 @@ huggingface-cli login
 # Deploy (base model only)
 python deploy/deploy_hf.py \
   --image ghcr.io/healeyengineering/liquid-host:latest \
-  --instance-type nvidia-l4
+  --instance-type nvidia-a100 --instance-size x1
 
-# Deploy with a fine-tuned LoRA adapter
+# Deploy with a fine-tuned LoRA adapter and training data editor
 python deploy/deploy_hf.py \
   --image ghcr.io/healeyengineering/liquid-host:latest \
-  --instance-type nvidia-l4 \
-  --adapter YOUR_USERNAME/my-finetune
+  --instance-type nvidia-a100 --instance-size x1 \
+  --adapter YOUR_USERNAME/my-finetune \
+  --hf-token $HF_TOKEN \
+  --training-repo YOUR_USERNAME/my-finetune-data
 ```
 
 ### Deploy Script Options
@@ -512,12 +521,14 @@ python deploy/deploy_hf.py \
 |------|---------|-------------|
 | `--image` | (required) | Docker image URL |
 | `--name` | `liquid-host-lfm` | Endpoint name |
-| `--repo` | `LiquidAI/LFM2.5-1.2B-Thinking` | HF model repo (mounted at `/repository`) |
-| `--instance-type` | `nvidia-t4` | GPU type (`nvidia-t4`, `nvidia-l4`, `nvidia-a10g`) |
+| `--repo` | `LiquidAI/LFM2-24B-A2B` | HF model repo (mounted at `/repository`) |
+| `--instance-type` | `nvidia-l4` | GPU type (`nvidia-t4`, `nvidia-l4`, `nvidia-a10g`, `nvidia-a100`) |
 | `--instance-size` | `x1` | Instance size (`x1`, `x2`, `x4`) |
 | `--region` | `us-east-1` | Cloud region |
 | `--vendor` | `aws` | Cloud vendor (`aws`, `azure`) |
 | `--adapter` | None | HF Hub adapter repo to load at startup |
+| `--hf-token` | None | HF token (needed for private adapter repos) |
+| `--training-repo` | None | HF dataset repo for the training data editor |
 | `--scale-to-zero` | `15` | Minutes before scaling to zero (0 to disable) |
 | `--namespace` | your username | HF namespace or org |
 
@@ -528,7 +539,7 @@ The container accepts these environment variables (set via HF portal or deploy s
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MODEL_PATH` | `/repository` | Path to model weights |
-| `MODEL_KEY` | `lfm2.5-1.2b-thinking` | Model registry key |
+| `MODEL_KEY` | `lfm2-24b-a2b` | Model registry key |
 | `ADAPTER_PATH` | None | HF Hub adapter repo ID or local path |
 | `PORT` | `80` | Server port |
 | `DEVICE_MAP` | `auto` | Device placement |
@@ -537,6 +548,8 @@ The container accepts these environment variables (set via HF portal or deploy s
 | `MCP_CONFIG` | None | Path to MCP server config |
 | `N_GPU_LAYERS` | `99` | GPU layers for GGUF backend |
 | `N_CTX` | `128000` | Context window for GGUF backend |
+| `HF_HOME` | `/tmp/hf_cache` | HuggingFace cache directory |
+| `TRAINING_HF_REPO` | None | HF dataset repo for training data editor |
 
 ### GPU Recommendations
 
@@ -544,9 +557,9 @@ The container accepts these environment variables (set via HF portal or deploy s
 |-------|---------|-------------|
 | LFM2.5-1.2B (no MCP tools) | T4 (16GB) | T4 |
 | LFM2.5-1.2B (with MCP tools) | L4 (24GB) | L4 |
-| Larger models (8B+) | A10G (24GB) | A100 (80GB) |
+| LFM2-24B-A2B (with MCP tools) | A100 (80GB) | A100 (80GB) |
 
-The 29 Aiera MCP tool schemas add ~13K tokens to the system prompt. With T4 (16GB), this causes CUDA OOM errors. Use L4 (24GB) or larger when MCP tools are enabled.
+The 29 Aiera MCP tool schemas add ~13K tokens to the system prompt. The 24B MoE model requires an A100 (80GB) when MCP tools are enabled. Smaller models (1.2B) work on L4 (24GB).
 
 ### Accessing the Deployed Endpoint
 
@@ -561,6 +574,26 @@ curl https://YOUR_ENDPOINT_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "Hello"}], "stream": true}'
 ```
+
+## Training Data Management
+
+The CLI includes commands to manage training data on HuggingFace Hub:
+
+```bash
+# Push local JSONL to HF Hub
+liquid-host data push data/training/aiera_tools_v4.jsonl --repo username/my-dataset
+
+# Pull from HF Hub to local file
+liquid-host data pull --repo username/my-dataset --output data/training/pulled.jsonl
+
+# List/preview a dataset
+liquid-host data list --repo username/my-dataset
+
+# Validate a local JSONL file
+liquid-host data validate data/training/aiera_tools_v4.jsonl
+```
+
+The web-based training data editor (`/training`) provides a UI for browsing, editing, and syncing training examples. Set `TRAINING_HF_REPO` and `HF_TOKEN` environment variables (or pass `--training-repo` and `--hf-token` to the deploy script) to auto-configure it.
 
 ## Verbose Logging
 
