@@ -299,7 +299,15 @@ def _build_training_script(
         bnb_4bit_quant_type="nf4",
     )'''
 
-    return f'''"""Remote LoRA fine-tuning for Liquid AI models on HF Spaces."""
+    # Include a timestamp to ensure file content changes on each launch,
+    # preventing HF's upload_folder from skipping "unchanged" files.
+    import datetime as _dt
+    build_ts = _dt.datetime.utcnow().isoformat()
+
+    return f'''"""Remote LoRA fine-tuning for Liquid AI models on HF Spaces.
+
+Generated: {build_ts}
+"""
 
 import json
 import os
@@ -372,6 +380,19 @@ def detect_target_modules(model):
     return sorted(target)
 
 
+def _wait_for_gpu(timeout=300, interval=10):
+    """Wait for GPU to become available (HF Spaces may delay allocation)."""
+    import time
+    start = time.time()
+    while time.time() - start < timeout:
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+            logger.info("GPU available: %s (count=%d)", torch.cuda.get_device_name(0), torch.cuda.device_count())
+            return True
+        logger.warning("No GPU detected yet, waiting %ds (elapsed %.0fs)...", interval, time.time() - start)
+        time.sleep(interval)
+    return False
+
+
 def main():
     # Use a writable cache directory (HF Space containers may not have write access to /.cache)
     os.environ["HF_HOME"] = "/tmp/hf_cache"
@@ -379,6 +400,12 @@ def main():
 
     _start_health_server()
     _status["phase"] = "loading_model"
+
+    # Wait for GPU hardware to become available
+    if not _wait_for_gpu():
+        logger.error("No GPU available after waiting. Aborting.")
+        raise RuntimeError("No GPU available — check Space hardware settings")
+
     logger.info("Loading tokenizer from %s", REPO_ID)
     tokenizer = AutoTokenizer.from_pretrained(REPO_ID, trust_remote_code=True, token=HF_TOKEN)
     if tokenizer.pad_token is None:
@@ -388,7 +415,7 @@ def main():
     model_kwargs = {{
         "pretrained_model_name_or_path": REPO_ID,
         "torch_dtype": torch.bfloat16 if BF16 else torch.float16,
-        "device_map": "auto",
+        "device_map": {{"": 0}},
         "trust_remote_code": True,
         "token": HF_TOKEN,
     }}
@@ -590,10 +617,15 @@ def finetune_remote(
         exist_ok=True,
     )
 
+    # Explicitly (re-)request GPU hardware — create_repo with exist_ok=True
+    # does not update hardware if the Space already exists.
+    api.request_space_hardware(space_repo, hw)
+
     # Set HF_TOKEN as a Space secret so the training script can access gated models
     api.add_space_secret(space_repo, "HF_TOKEN", token)
 
-    # Build a minimal Dockerfile that runs the training script
+    # Build a minimal Dockerfile that runs the training script.
+    # train.py already starts a health server on port 7860 for HF Spaces.
     dockerfile = (
         "FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime\n"
         "WORKDIR /app\n"
@@ -602,6 +634,7 @@ def finetune_remote(
         "COPY requirements.txt .\n"
         "RUN pip install --no-cache-dir -r requirements.txt\n"
         "COPY train.py .\n"
+        "EXPOSE 7860\n"
         'CMD ["python", "train.py"]\n'
     )
 

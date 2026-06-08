@@ -288,8 +288,10 @@ class ModelManager:
             "return_tensors": "pt",
             "tokenize": True,
         }
-        if tools:
-            kwargs["tools"] = tools
+        # NOTE: Do NOT pass tools to apply_chat_template. The tokenizer's
+        # built-in template formats tools in the base model's native
+        # <|tool_call_start|> format, which overrides the fine-tuned
+        # <tool_call> JSON format. Tool guidance is already in the system prompt.
         result = self._hf_tokenizer.apply_chat_template(messages, **kwargs)
         if hasattr(result, "input_ids"):
             result = result.input_ids
@@ -485,6 +487,7 @@ class ModelManager:
         tool_count = len(tools_schema) if tools_schema else 0
         logger.info("generate_with_tools [%s]: starting — %d MCP tools, max_rounds=%d", self._backend, tool_count, max_tool_rounds)
         yield {"type": "status", "content": f"Connected to MCP ({tool_count} tools available)"}
+        _previous_call_sigs: set[tuple[str, str]] = set()
 
         for _round in range(max_tool_rounds):
             logger.info("generate_with_tools: round %d/%d — %d messages in context", _round + 1, max_tool_rounds, len(working_messages))
@@ -578,7 +581,7 @@ class ModelManager:
                 yield {"type": "thinking", "content": "".join(thinking_buffer)}
 
             raw_output = "".join(full_tokens)
-            logger.info("generate_with_tools: raw output (%d chars): %.500s", len(raw_output), raw_output)
+            logger.info("generate_with_tools: raw output (%d chars): %.1000s", len(raw_output), raw_output)
 
             # Check for tool calls in the collected output
             tool_calls = McpClientManager.parse_tool_calls(raw_output)
@@ -586,12 +589,28 @@ class ModelManager:
             for tc in tool_calls:
                 logger.info("generate_with_tools: parsed tool call — %s(%s)", tc["name"], tc["arguments"])
 
+            # Emit round info for logging
+            yield {"type": "round_info", "round": _round + 1, "raw_output": raw_output, "tool_calls_found": len(tool_calls)}
+
             if not tool_calls:
-                # No tool calls — flush remaining window tokens
-                for i in range(streamed_count, len(content_buffer)):
-                    cleaned = _clean_token(content_buffer[i])
-                    if cleaned:
-                        yield {"type": "token", "content": cleaned}
+                # No valid tool calls found. If a marker was detected but
+                # couldn't be parsed, strip everything from the first marker
+                # onward so the user doesn't see raw tool markup.
+                if tool_marker_found:
+                    logger.warning("generate_with_tools: tool marker detected but no valid tool calls parsed — stripping trailing markup")
+                    remaining = "".join(_clean_token(content_buffer[i]) for i in range(streamed_count, len(content_buffer)))
+                    for marker in _TOOL_MARKERS:
+                        marker_pos = remaining.find(marker)
+                        if marker_pos >= 0:
+                            remaining = remaining[:marker_pos]
+                    remaining = remaining.rstrip()
+                    if remaining:
+                        yield {"type": "token", "content": remaining}
+                else:
+                    for i in range(streamed_count, len(content_buffer)):
+                        cleaned = _clean_token(content_buffer[i])
+                        if cleaned:
+                            yield {"type": "token", "content": cleaned}
                 yield {"type": "done"}
                 return
 
@@ -604,6 +623,8 @@ class ModelManager:
             clean_output = raw_output.replace("<|im_end|>", "")
             clean_output = _re.sub(r"<tool_call>\s*\{.*?\}\s*</tool_call>", "", clean_output, flags=_re.DOTALL)
             clean_output = _re.sub(r"\<\|tool_call_start\|>.*?<\|tool_call_end\|>", "", clean_output, flags=_re.DOTALL)
+            # Also strip bracket-style tool calls: [func_name(...)]
+            clean_output = _re.sub(r"\[\w+\(.*?\)\]", "", clean_output, flags=_re.DOTALL)
             assistant_content = clean_output.strip()
             working_messages.append({"role": "assistant", "content": assistant_content})
 
@@ -638,12 +659,66 @@ class ModelManager:
                     if status_line and not status_line.startswith(("[", "<")):
                         tool_status_lines[i] = status_line
 
+            # Detect duplicate tool calls (model stuck in a loop)
+            call_signatures = [(tc["name"], str(sorted(tc["arguments"].items()))) for tc in tool_calls]
+            duplicate_calls = [sig for sig in call_signatures if sig in _previous_call_sigs]
+            if duplicate_calls and _round > 0:
+                logger.warning("generate_with_tools: round %d — detected %d duplicate tool call(s), breaking loop", _round + 1, len(duplicate_calls))
+                # Strip tool call markup from remaining content and flush as final answer
+                remaining_text = raw_output
+                for st in _STRIP_TOKENS:
+                    remaining_text = remaining_text.replace(st, "")
+                for marker in _TOOL_MARKERS:
+                    marker_pos = remaining_text.find(marker)
+                    if marker_pos >= 0:
+                        remaining_text = remaining_text[:marker_pos]
+                # Also strip bracket-style tool calls
+                import re as _re
+                remaining_text = _re.sub(r"\[\w+\(.*?\)\]", "", remaining_text, flags=_re.DOTALL)
+                if "</think>" in remaining_text:
+                    remaining_text = remaining_text.split("</think>", 1)[1]
+                remaining_text = remaining_text.strip()
+                if streamed_count > 0:
+                    yield {"type": "clear"}
+                if remaining_text:
+                    yield {"type": "token", "content": remaining_text}
+                # Fall through to final generation with tool results already in context
+                logger.info("generate_with_tools: breaking out of loop to generate final answer with existing context")
+                break
+            _previous_call_sigs.update(call_signatures)
+
+            # Auto-inject missing required params for known tools
+            from datetime import datetime, timedelta
+            for call in tool_calls:
+                args = call["arguments"]
+                name = call["name"]
+                # find_events requires start_date and end_date
+                if name == "find_events":
+                    if "start_date" not in args:
+                        args["start_date"] = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
+                        logger.info("generate_with_tools: auto-injected start_date=%s for find_events", args["start_date"])
+                    if "end_date" not in args:
+                        args["end_date"] = datetime.now().strftime("%Y-%m-%d")
+                        logger.info("generate_with_tools: auto-injected end_date=%s for find_events", args["end_date"])
+                # search_transcripts requires query_text
+                if name == "search_transcripts" and "query_text" not in args:
+                    # Build a reasonable query from the user's original message
+                    user_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+                    args["query_text"] = user_msg[:200] if user_msg else "earnings results guidance"
+                    logger.info("generate_with_tools: auto-injected query_text for search_transcripts")
+                # Ensure self_identification is always set
+                if "self_identification" not in args:
+                    args["self_identification"] = "aierachat"
+
             # Execute each tool call and append results
             for i, call in enumerate(tool_calls):
                 logger.info("generate_with_tools: round %d, call %d/%d — %s(%s)", _round + 1, i + 1, len(tool_calls), call["name"], call["arguments"])
                 status_msg = tool_status_lines.get(i, f"Calling tool: {call['name']}...")
                 logger.info("generate_with_tools: status message for tool %d: %r", i, status_msg)
                 yield {"type": "status", "content": status_msg}
+                import time as _time
+                _tool_t0 = _time.time()
+                _tool_error = None
                 try:
                     result_text = await mcp_manager.call_tool(call["name"], call["arguments"])
                     logger.info("generate_with_tools: got result from %s (%d chars)", call["name"], len(result_text))
@@ -651,18 +726,63 @@ class ModelManager:
                 except Exception as tool_err:
                     logger.error("generate_with_tools: tool call %s failed — %s", call["name"], tool_err)
                     result_text = f"Error calling {call['name']}: {tool_err}"
+                    _tool_error = str(tool_err)
                     yield {"type": "status", "content": f"Tool error: {call['name']} — {tool_err}"}
+                _tool_dur = (_time.time() - _tool_t0) * 1000
+                yield {
+                    "type": "tool_call",
+                    "name": call["name"],
+                    "arguments": call["arguments"],
+                    "result_length": len(result_text),
+                    "result_preview": result_text[:500],
+                    "duration_ms": _tool_dur,
+                    "error": _tool_error,
+                }
                 working_messages.append({"role": "tool", "content": result_text})
                 yield {"type": "history_message", "role": "tool", "content": result_text}
+
+                # If tool returned empty results, add a hint for the model to adjust
+                try:
+                    import json as _json
+                    result_parsed = _json.loads(result_text)
+                    response_data = result_parsed.get("response", {}).get("data", None)
+                    if response_data is not None and len(response_data) == 0:
+                        hint = f"The tool {call['name']} returned no results. Try widening the date range (use start_date at least 6-12 months back) or adjusting other parameters. Do NOT repeat the same call."
+                        working_messages.append({"role": "system", "content": hint})
+                        logger.info("generate_with_tools: injected empty-result hint for %s", call["name"])
+                except Exception:
+                    pass
+
                 yield {"type": "status", "content": f"Got result from {call['name']}"}
 
-        # Exhausted rounds — final streaming answer
-        logger.warning("generate_with_tools: reached max tool rounds (%d), generating final answer", max_tool_rounds)
+        # Exhausted rounds or broke out of loop — final streaming answer
+        logger.warning("generate_with_tools: generating final answer (after %d round(s), %d messages in context)", _round + 1, len(working_messages))
         yield {"type": "status", "content": "Generating final answer..."}
         yield {"type": "status", "content": ""}
+
+        # Collect full output to strip any lingering tool calls
+        import re as _re
+        final_tokens: list[str] = []
         async for token, _ in self._async_stream_raw(working_messages, config):
-            for st in ["<|im_end|>", "<|im_start|>", "<|endoftext|>"]:
-                token = token.replace(st, "")
-            if token:
-                yield {"type": "token", "content": token}
+            final_tokens.append(token)
+
+        final_output = "".join(final_tokens)
+        logger.info("generate_with_tools: final answer raw (%d chars): %.1000s", len(final_output), final_output)
+
+        # Strip special tokens and any tool call markup
+        for st in ["<|im_end|>", "<|im_start|>", "<|endoftext|>"]:
+            final_output = final_output.replace(st, "")
+        final_output = _re.sub(r"<tool_call>\s*\{.*?\}\s*</tool_call>", "", final_output, flags=_re.DOTALL)
+        final_output = _re.sub(r"<\|tool_call_start\|>.*?<\|tool_call_end\|>", "", final_output, flags=_re.DOTALL)
+        final_output = _re.sub(r"\[\w+\(.*?\)\]", "", final_output, flags=_re.DOTALL)
+        # Strip thinking block if present
+        if "<think>" in final_output and "</think>" in final_output:
+            final_output = _re.sub(r"<think>.*?</think>", "", final_output, flags=_re.DOTALL)
+        final_output = final_output.strip()
+
+        if final_output:
+            yield {"type": "token", "content": final_output}
+        else:
+            logger.warning("generate_with_tools: final answer was empty after stripping markup")
+            yield {"type": "token", "content": "I was unable to generate a complete response. The tool results have been collected but the model could not produce a final answer. Please try rephrasing your question."}
         yield {"type": "done"}

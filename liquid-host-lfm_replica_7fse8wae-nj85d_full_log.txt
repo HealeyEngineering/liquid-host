@@ -1,0 +1,615 @@
+- 2026-03-16T19:19:23.294+00:00 2026-03-16 19:19:23,294 [INFO] entrypoint: Detected backend: transformers
+- 2026-03-16T19:19:23.294+00:00 2026-03-16 19:19:23,294 [INFO] entrypoint: Model path: /repository
+- 2026-03-16T19:19:23.294+00:00 2026-03-16 19:19:23,294 [INFO] entrypoint: Loading transformers model: lfm2-24b-a2b from /repository (device_map=auto, dtype=None)
+- 2026-03-16T19:19:23.294+00:00 2026-03-16 19:19:23,294 [INFO] entrypoint: LoRA adapter: bryanhealey/my-aiera-finetune-v7
+- 2026-03-16T19:19:25.818+00:00 2026-03-16 19:19:25,818 [INFO] liquid_host.models.manager: Model unloaded
+- 2026-03-16T19:19:25.818+00:00 2026-03-16 19:19:25,818 [INFO] liquid_host.models.manager: Loading LFM2-24B-A2B via transformers from /repository (dtype=bfloat16, device_map=auto) ...
+- 2026-03-16T19:19:26.345+00:00 `torch_dtype` is deprecated! Use `dtype` instead!
+- 2026-03-16T19:19:39.899+00:00 Loading weights:   0%|          | 0/390 [00:00<?, ?it/s]Loading weights:   5%|▌         | 20/390 [00:00<00:04, 78.75it/s]Loading weights:   9%|▉         | 35/390 [00:00<00:05, 60.35it/s]Loading weights:  11%|█▏        | 44/390 [00:00<00:07, 46.10it/s]Loading weights:  14%|█▎        | 53/390 [00:01<00:08, 39.54it/s]Loading weights:  15%|█▌        | 59/390 [00:01<00:10, 32.76it/s]Loading weights:  19%|█▉        | 74/390 [00:01<00:08, 38.41it/s]Loading weights:  21%|██▏       | 83/390 [00:02<00:08, 35.83it/s]Loading weights:  24%|██▎       | 92/390 [00:02<00:08, 34.09it/s]Loading weights:  25%|██▌       | 98/390 [00:02<00:09, 30.07it/s]Loading weights:  29%|██▉       | 113/390 [00:02<00:07, 35.90it/s]Loading weights:  31%|███▏      | 122/390 [00:03<00:07, 34.17it/s]Loading weights:  34%|███▎      | 131/390 [00:03<00:07, 33.14it/s]Loading weights:  35%|███▌      | 137/390 [00:03<00:08, 29.51it/s]Loading weights:  39%|███▉      | 152/390 [00:04<00:06, 35.32it/s]Loading weights:  41%|████▏     | 161/390 [00:04<00:06, 33.71it/s]Loading weights:  44%|████▎     | 170/390 [00:04<00:06, 32.81it/s]Loading weights:  45%|████▌     | 176/390 [00:05<00:07, 29.15it/s]Loading weights:  49%|████▉     | 191/390 [00:05<00:05, 35.18it/s]Loading weights:  51%|█████▏    | 200/390 [00:05<00:05, 33.37it/s]Loading weights:  54%|█████▎    | 209/390 [00:05<00:05, 32.72it/s]Loading weights:  55%|█████▌    | 215/390 [00:06<00:06, 29.10it/s]Loading weights:  59%|█████▉    | 230/390 [00:06<00:04, 35.23it/s]Loading weights:  61%|██████▏   | 239/390 [00:06<00:04, 33.78it/s]Loading weights:  64%|██████▎   | 248/390 [00:07<00:04, 32.50it/s]Loading weights:  65%|██████▌   | 254/390 [00:07<00:04, 28.76it/s]Loading weights:  69%|██████▉   | 269/390 [00:07<00:03, 35.20it/s]Loading weights:  71%|███████▏  | 278/390 [00:08<00:03, 33.70it/s]Loading weights:  74%|███████▎  | 287/390 [00:08<00:03, 32.79it/s]Loading weights:  75%|███████▌  | 293/390 [00:08<00:03, 29.35it/s]Loading weights:  79%|███████▉  | 308/390 [00:08<00:02, 35.30it/s]Loading weights:  81%|████████▏ | 317/390 [00:09<00:02, 33.82it/s]Loading weights:  84%|████████▎ | 326/390 [00:09<00:01, 32.87it/s]Loading weights:  85%|████████▌ | 332/390 [00:09<00:01, 29.42it/s]Loading weights:  89%|████████▉ | 347/390 [00:10<00:01, 35.15it/s]Loading weights:  91%|█████████▏| 356/390 [00:10<00:01, 33.86it/s]Loading weights:  94%|█████████▎| 365/390 [00:10<00:00, 32.78it/s]Loading weights:  95%|█████████▌| 371/390 [00:10<00:00, 29.38it/s]Loading weights:  99%|█████████▉| 386/390 [00:11<00:00, 35.55it/s]Loading weights: 100%|██████████| 390/390 [00:11<00:00, 34.57it/s]
+- 2026-03-16T19:19:40.135+00:00 2026-03-16 19:19:40,135 [INFO] liquid_host.models.manager: Loading LoRA adapter from bryanhealey/my-aiera-finetune-v7 ...
+- 2026-03-16T19:19:40.171+00:00 2026-03-16 19:19:40,171 [INFO] httpx: HTTP Request: HEAD https://huggingface.co/bryanhealey/my-aiera-finetune-v7/resolve/main/adapter_config.json "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:40.188+00:00 2026-03-16 19:19:40,188 [INFO] httpx: HTTP Request: GET https://huggingface.co/bryanhealey/my-aiera-finetune-v7/resolve/main/adapter_config.json "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:40.202+00:00 2026-03-16 19:19:40,202 [INFO] httpx: HTTP Request: HEAD https://huggingface.co/bryanhealey/my-aiera-finetune-v7/resolve/main/adapter_config.json "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:40.977+00:00 2026-03-16 19:19:40,977 [INFO] httpx: HTTP Request: HEAD https://huggingface.co/bryanhealey/my-aiera-finetune-v7/resolve/main/adapter_model.safetensors "HTTP/1.1 302 Found"
+- 2026-03-16T19:19:40.994+00:00 2026-03-16 19:19:40,994 [INFO] httpx: HTTP Request: HEAD https://huggingface.co/bryanhealey/my-aiera-finetune-v7/resolve/main/adapter_model.safetensors "HTTP/1.1 302 Found"
+- 2026-03-16T19:19:41.007+00:00 2026-03-16 19:19:41,007 [INFO] httpx: HTTP Request: GET https://huggingface.co/api/models/bryanhealey/my-aiera-finetune-v7/xet-read-token/5b282b2527f1f2d2e93b306efd9462b93dd8ebfa "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:41.843+00:00 2026-03-16 19:19:41,843 [INFO] liquid_host.models.manager: LoRA adapter merged successfully
+- 2026-03-16T19:19:41.843+00:00 2026-03-16 19:19:41,843 [INFO] liquid_host.models.manager: LFM2-24B-A2B loaded successfully (transformers backend)
+- 2026-03-16T19:19:41.843+00:00 2026-03-16 19:19:41,843 [INFO] entrypoint: Starting server on port 80
+- 2026-03-16T19:19:41.862+00:00 INFO:     Started server process [1]
+- 2026-03-16T19:19:41.862+00:00 INFO:     Waiting for application startup.
+- 2026-03-16T19:19:41.862+00:00 2026-03-16 19:19:41,862 [INFO] liquid_host.mcp_client: Connecting to MCP server 'aiera' at https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 (transport=streamable_http) ...
+- 2026-03-16T19:19:42.800+00:00 2026-03-16 19:19:42,800 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:42.801+00:00 2026-03-16 19:19:42,801 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-11-25
+- 2026-03-16T19:19:43.540+00:00 2026-03-16 19:19:43,540 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 202 Accepted"
+- 2026-03-16T19:19:43.948+00:00 2026-03-16 19:19:43,948 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:19:43.955+00:00 2026-03-16 19:19:43,955 [INFO] liquid_host.mcp_client: Connected to 'aiera' — discovered 41 tools: ['find_events', 'find_conferences', 'get_event', 'get_upcoming_events', 'find_filings', 'get_filing', 'find_equities', 'get_equity_summaries', 'get_available_watchlists', 'get_available_indexes', 'get_sectors_and_subsectors', 'get_index_constituents', 'get_watchlist_constituents', 'get_financials', 'get_ratios', 'get_kpis_and_segments', 'find_company_docs', 'get_company_doc', 'get_company_doc_categories', 'get_company_doc_keywords', 'find_third_bridge_events', 'get_third_bridge_event', 'find_research', 'get_research', 'get_research_providers', 'get_research_authors', 'get_research_asset_classes', 'get_research_asset_types', 'get_research_subjects', 'get_research_product_focuses', 'get_research_discipline_types', 'get_research_region_types', 'get_research_country_codes', 'search_transcripts', 'search_filings', 'search_research', 'search_company_docs', 'search_thirdbridge', 'trusted_web_search', 'ping', 'debug_auth']
+- 2026-03-16T19:19:43.955+00:00 INFO:     Application startup complete.
+- 2026-03-16T19:19:44.040+00:00 INFO:     Uvicorn running on http://0.0.0.0:80 (Press CTRL+C to quit)
+- 2026-03-16T19:19:44.975+00:00 INFO:     10.102.58.239:37230 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:19:44.976+00:00 INFO:     10.102.58.239:37232 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:19:45.870+00:00 INFO:     10.41.43.135:30138 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:19:54.977+00:00 INFO:     10.102.58.239:50836 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:19:59.975+00:00 INFO:     10.102.58.239:43960 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:04.978+00:00 INFO:     10.102.58.239:43962 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:09.974+00:00 INFO:     10.102.58.239:59596 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:14.977+00:00 INFO:     10.102.58.239:59612 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:19.974+00:00 INFO:     10.102.58.239:45984 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:24.977+00:00 INFO:     10.102.58.239:45988 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:29.974+00:00 INFO:     10.102.58.239:56684 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:34.976+00:00 INFO:     10.102.58.239:56690 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:39.974+00:00 INFO:     10.102.58.239:43774 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:44.977+00:00 INFO:     10.102.58.239:43786 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:49.975+00:00 INFO:     10.102.58.239:52032 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:54.977+00:00 INFO:     10.102.58.239:52046 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:20:59.974+00:00 INFO:     10.102.58.239:40564 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:04.977+00:00 INFO:     10.102.58.239:40572 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:09.974+00:00 INFO:     10.102.58.239:52972 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:14.976+00:00 INFO:     10.102.58.239:52982 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:19.975+00:00 INFO:     10.102.58.239:41512 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:24.976+00:00 INFO:     10.102.58.239:41514 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:29.975+00:00 INFO:     10.102.58.239:45524 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:34.977+00:00 INFO:     10.102.58.239:45532 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:39.974+00:00 INFO:     10.102.58.239:33116 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:44.976+00:00 INFO:     10.102.58.239:33118 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:49.974+00:00 INFO:     10.102.58.239:59448 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:54.977+00:00 INFO:     10.102.58.239:59450 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:21:59.975+00:00 INFO:     10.102.58.239:40670 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:04.977+00:00 INFO:     10.102.58.239:40684 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:09.975+00:00 INFO:     10.102.58.239:38350 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:14.977+00:00 INFO:     10.102.58.239:38364 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:19.974+00:00 INFO:     10.102.58.239:56926 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:24.977+00:00 INFO:     10.102.58.239:56932 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:29.975+00:00 INFO:     10.102.58.239:44040 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:34.977+00:00 INFO:     10.102.58.239:44050 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:39.974+00:00 INFO:     10.102.58.239:54404 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:44.977+00:00 INFO:     10.102.58.239:54408 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:49.975+00:00 INFO:     10.102.58.239:59898 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:54.976+00:00 INFO:     10.102.58.239:59904 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:22:59.975+00:00 INFO:     10.102.58.239:43130 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:04.977+00:00 INFO:     10.102.58.239:43132 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:09.974+00:00 INFO:     10.102.58.239:44446 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:14.976+00:00 INFO:     10.102.58.239:44454 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:18.401+00:00 INFO:     10.41.24.173:50718 - "GET / HTTP/1.1" 200 OK
+- 2026-03-16T19:23:18.456+00:00 INFO:     10.41.24.92:45207 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:18.459+00:00 INFO:     10.41.6.155:4988 - "GET /mcp/api-key HTTP/1.1" 200 OK
+- 2026-03-16T19:23:18.496+00:00 INFO:     10.41.32.205:39795 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+- 2026-03-16T19:23:19.975+00:00 INFO:     10.102.58.239:44464 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:23.522+00:00 INFO:     10.41.43.135:37690 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:24.977+00:00 INFO:     10.102.58.239:44468 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app: System prompt: **Today:** Monday, March 16, 2026, 7:23 PM
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 You are an institutional financial research assistant. Reason step-by-step, plan tool usage, and call tools efficiently.
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 ---
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 ## Persona & Audience
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 Provide rigorous, data-driven analysis for an institutional audience — portfolio managers, buy-side analys
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app: Messages being sent to model (2 total):
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app:   msg[0] role=system content=**Today:** Monday, March 16, 2026, 7:23 PM
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 You are an institutional financial research assistant. Reason step-by-step, plan tool usage, and call tools efficiently.
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 ---
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 ## Persona & Audience
+- 2026-03-16T19:23:28.295+00:00 
+- 2026-03-16T19:23:28.295+00:00 Provid
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app:   msg[1] role=user content=can you summarize the latest nflx earnings call
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app: POST /v1/chat/completions — 2 messages, stream=True, use_tools=True, max_tokens=4096, temp=0.30
+- 2026-03-16T19:23:28.295+00:00 2026-03-16 19:23:28,295 [INFO] liquid_host.server.app: Routing to tool-calling stream
+- 2026-03-16T19:23:28.295+00:00 INFO:     10.41.43.135:22250 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+- 2026-03-16T19:23:28.296+00:00 2026-03-16 19:23:28,296 [INFO] liquid_host.models.manager: generate_with_tools [transformers]: starting — 41 MCP tools, max_rounds=5
+- 2026-03-16T19:23:28.296+00:00 2026-03-16 19:23:28,296 [INFO] liquid_host.models.manager: generate_with_tools: round 1/5 — 2 messages in context
+- 2026-03-16T19:23:28.296+00:00 2026-03-16 19:23:28,296 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:28.314+00:00 2026-03-16 19:23:28,314 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (1534 input tokens) ...
+- 2026-03-16T19:23:28.522+00:00 INFO:     10.41.24.173:41259 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:29.974+00:00 INFO:     10.102.58.239:56620 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:31.432+00:00 2026-03-16 19:23:31,432 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 48 tokens in 3.1s (15.4 tok/s)
+- 2026-03-16T19:23:31.432+00:00 2026-03-16 19:23:31,432 [INFO] liquid_host.models.manager: generate_with_tools: raw output (161 chars): <|tool_call_start|>[search_transcripts(equity_ids=['NFLX:US'], event_type="earnings", start_date="2025-12-01", end_date="2026-03-15")]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: round 1 — found 1 tool call(s)
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: parsed tool call — search_transcripts({'equity_ids': ['NFLX:US'], 'event_type': 'earnings', 'start_date': '2025-12-01', 'end_date': '2026-03-15'})
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: post-think text: <|tool_call_start|>[search_transcripts(equity_ids=['NFLX:US'], event_type="earnings", start_date="2025-12-01", end_date="2026-03-15")]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: looking for tool call marker in post_think, pos=19
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: extracted status line: '<|tool_call_start|>'
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: round 1, call 1/1 — search_transcripts({'equity_ids': ['NFLX:US'], 'event_type': 'earnings', 'start_date': '2025-12-01', 'end_date': '2026-03-15'})
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.models.manager: generate_with_tools: status message for tool 0: 'Calling tool: search_transcripts...'
+- 2026-03-16T19:23:31.433+00:00 2026-03-16 19:23:31,433 [INFO] liquid_host.mcp_client: Calling tool 'search_transcripts' on server 'aiera' with args: {'equity_ids': ['NFLX:US'], 'event_type': 'earnings', 'start_date': '2025-12-01', 'end_date': '2026-03-15'}
+- 2026-03-16T19:23:32.238+00:00 2026-03-16 19:23:32,237 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:23:32.238+00:00 2026-03-16 19:23:32,238 [INFO] liquid_host.models.manager: generate_with_tools: got result from search_transcripts (519 chars)
+- 2026-03-16T19:23:32.238+00:00 2026-03-16 19:23:32,238 [INFO] liquid_host.models.manager: generate_with_tools: tool result preview: Error executing tool search_transcripts: 2 validation errors for search_transcriptsArguments
+- 2026-03-16T19:23:32.238+00:00 query_text
+- 2026-03-16T19:23:32.238+00:00   Field required [type=missing, input_value={'equity_ids': ['NFLX:US'...end_date': '2026-03-15'}, input_type=dict]
+- 2026-03-16T19:23:32.238+00:00     For further information visit https://errors.pydantic.dev/2.12/v/missing
+- 2026-03-16T19:23:32.238+00:00 equity_ids.0
+- 2026-03-16T19:23:32.238+00:00   Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='NFLX:US', input_type=str]
+- 2026-03-16T19:23:32.238+00:00     For further information visit https://errors.pydantic.dev
+- 2026-03-16T19:23:32.238+00:00 2026-03-16 19:23:32,238 [INFO] liquid_host.models.manager: generate_with_tools: round 2/5 — 4 messages in context
+- 2026-03-16T19:23:32.239+00:00 2026-03-16 19:23:32,239 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:32.244+00:00 2026-03-16 19:23:32,244 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (1695 input tokens) ...
+- 2026-03-16T19:23:33.524+00:00 INFO:     10.41.23.147:21977 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:33.561+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 24 tokens in 1.3s (18.2 tok/s)
+- 2026-03-16T19:23:33.561+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: raw output (105 chars): <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:33.561+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: round 2 — found 1 tool call(s)
+- 2026-03-16T19:23:33.561+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: parsed tool call — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:33.561+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: post-think text: <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:33.562+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: looking for tool call marker in post_think, pos=19
+- 2026-03-16T19:23:33.562+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: extracted status line: '<|tool_call_start|>'
+- 2026-03-16T19:23:33.562+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: round 2, call 1/1 — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:33.562+00:00 2026-03-16 19:23:33,561 [INFO] liquid_host.models.manager: generate_with_tools: status message for tool 0: 'Calling tool: search_transcripts...'
+- 2026-03-16T19:23:33.562+00:00 2026-03-16 19:23:33,562 [INFO] liquid_host.mcp_client: Calling tool 'search_transcripts' on server 'aiera' with args: {'equity_ids': [12345], 'event_ids': [67890]}
+- 2026-03-16T19:23:34.044+00:00 2026-03-16 19:23:34,044 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:23:34.045+00:00 2026-03-16 19:23:34,045 [INFO] liquid_host.models.manager: generate_with_tools: got result from search_transcripts (287 chars)
+- 2026-03-16T19:23:34.045+00:00 2026-03-16 19:23:34,045 [INFO] liquid_host.models.manager: generate_with_tools: tool result preview: Error executing tool search_transcripts: 1 validation error for search_transcriptsArguments
+- 2026-03-16T19:23:34.045+00:00 query_text
+- 2026-03-16T19:23:34.045+00:00   Field required [type=missing, input_value={'equity_ids': [12345], 'event_ids': [67890]}, input_type=dict]
+- 2026-03-16T19:23:34.045+00:00     For further information visit https://errors.pydantic.dev/2.12/v/missing
+- 2026-03-16T19:23:34.045+00:00 2026-03-16 19:23:34,045 [INFO] liquid_host.models.manager: generate_with_tools: round 3/5 — 6 messages in context
+- 2026-03-16T19:23:34.045+00:00 2026-03-16 19:23:34,045 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:34.050+00:00 2026-03-16 19:23:34,050 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (1782 input tokens) ...
+- 2026-03-16T19:23:34.977+00:00 INFO:     10.102.58.239:56632 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:35.365+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 24 tokens in 1.3s (18.3 tok/s)
+- 2026-03-16T19:23:35.365+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: generate_with_tools: raw output (105 chars): <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:35.365+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: generate_with_tools: round 3 — found 1 tool call(s)
+- 2026-03-16T19:23:35.365+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: generate_with_tools: parsed tool call — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:35.365+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: generate_with_tools: post-think text: <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:35.366+00:00 2026-03-16 19:23:35,365 [INFO] liquid_host.models.manager: generate_with_tools: looking for tool call marker in post_think, pos=19
+- 2026-03-16T19:23:35.366+00:00 2026-03-16 19:23:35,366 [INFO] liquid_host.models.manager: generate_with_tools: extracted status line: '<|tool_call_start|>'
+- 2026-03-16T19:23:35.366+00:00 2026-03-16 19:23:35,366 [INFO] liquid_host.models.manager: generate_with_tools: round 3, call 1/1 — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:35.366+00:00 2026-03-16 19:23:35,366 [INFO] liquid_host.models.manager: generate_with_tools: status message for tool 0: 'Calling tool: search_transcripts...'
+- 2026-03-16T19:23:35.366+00:00 2026-03-16 19:23:35,366 [INFO] liquid_host.mcp_client: Calling tool 'search_transcripts' on server 'aiera' with args: {'equity_ids': [12345], 'event_ids': [67890]}
+- 2026-03-16T19:23:35.703+00:00 2026-03-16 19:23:35,703 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:23:35.704+00:00 2026-03-16 19:23:35,703 [INFO] liquid_host.models.manager: generate_with_tools: got result from search_transcripts (287 chars)
+- 2026-03-16T19:23:35.704+00:00 2026-03-16 19:23:35,704 [INFO] liquid_host.models.manager: generate_with_tools: tool result preview: Error executing tool search_transcripts: 1 validation error for search_transcriptsArguments
+- 2026-03-16T19:23:35.704+00:00 query_text
+- 2026-03-16T19:23:35.704+00:00   Field required [type=missing, input_value={'equity_ids': [12345], 'event_ids': [67890]}, input_type=dict]
+- 2026-03-16T19:23:35.704+00:00     For further information visit https://errors.pydantic.dev/2.12/v/missing
+- 2026-03-16T19:23:35.704+00:00 2026-03-16 19:23:35,704 [INFO] liquid_host.models.manager: generate_with_tools: round 4/5 — 8 messages in context
+- 2026-03-16T19:23:35.704+00:00 2026-03-16 19:23:35,704 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:35.709+00:00 2026-03-16 19:23:35,709 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (1869 input tokens) ...
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 24 tokens in 1.3s (18.3 tok/s)
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: raw output (105 chars): <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: round 4 — found 1 tool call(s)
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: parsed tool call — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: post-think text: <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: looking for tool call marker in post_think, pos=19
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: extracted status line: '<|tool_call_start|>'
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: round 4, call 1/1 — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.models.manager: generate_with_tools: status message for tool 0: 'Calling tool: search_transcripts...'
+- 2026-03-16T19:23:37.023+00:00 2026-03-16 19:23:37,023 [INFO] liquid_host.mcp_client: Calling tool 'search_transcripts' on server 'aiera' with args: {'equity_ids': [12345], 'event_ids': [67890]}
+- 2026-03-16T19:23:37.339+00:00 2026-03-16 19:23:37,339 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:23:37.340+00:00 2026-03-16 19:23:37,340 [INFO] liquid_host.models.manager: generate_with_tools: got result from search_transcripts (287 chars)
+- 2026-03-16T19:23:37.340+00:00 2026-03-16 19:23:37,340 [INFO] liquid_host.models.manager: generate_with_tools: tool result preview: Error executing tool search_transcripts: 1 validation error for search_transcriptsArguments
+- 2026-03-16T19:23:37.340+00:00 query_text
+- 2026-03-16T19:23:37.340+00:00   Field required [type=missing, input_value={'equity_ids': [12345], 'event_ids': [67890]}, input_type=dict]
+- 2026-03-16T19:23:37.340+00:00     For further information visit https://errors.pydantic.dev/2.12/v/missing
+- 2026-03-16T19:23:37.340+00:00 2026-03-16 19:23:37,340 [INFO] liquid_host.models.manager: generate_with_tools: round 5/5 — 10 messages in context
+- 2026-03-16T19:23:37.341+00:00 2026-03-16 19:23:37,340 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:37.346+00:00 2026-03-16 19:23:37,346 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (1956 input tokens) ...
+- 2026-03-16T19:23:38.663+00:00 2026-03-16 19:23:38,663 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 24 tokens in 1.3s (18.2 tok/s)
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,663 [INFO] liquid_host.models.manager: generate_with_tools: raw output (105 chars): <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: round 5 — found 1 tool call(s)
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: parsed tool call — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: post-think text: <|tool_call_start|>[search_transcripts(equity_ids=[12345], event_ids=[67890])]<|tool_call_end|><|im_end|>
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: looking for tool call marker in post_think, pos=19
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: extracted status line: '<|tool_call_start|>'
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: round 5, call 1/1 — search_transcripts({'equity_ids': [12345], 'event_ids': [67890]})
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.models.manager: generate_with_tools: status message for tool 0: 'Calling tool: search_transcripts...'
+- 2026-03-16T19:23:38.664+00:00 2026-03-16 19:23:38,664 [INFO] liquid_host.mcp_client: Calling tool 'search_transcripts' on server 'aiera' with args: {'equity_ids': [12345], 'event_ids': [67890]}
+- 2026-03-16T19:23:38.742+00:00 INFO:     10.41.11.230:28456 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:38.983+00:00 2026-03-16 19:23:38,983 [INFO] httpx: HTTP Request: POST https://mcp-pub.dev.aiera.com?api_key=92a7b3bb3785afef8b252d1696395015 "HTTP/1.1 200 OK"
+- 2026-03-16T19:23:38.984+00:00 2026-03-16 19:23:38,984 [INFO] liquid_host.models.manager: generate_with_tools: got result from search_transcripts (287 chars)
+- 2026-03-16T19:23:38.984+00:00 2026-03-16 19:23:38,984 [INFO] liquid_host.models.manager: generate_with_tools: tool result preview: Error executing tool search_transcripts: 1 validation error for search_transcriptsArguments
+- 2026-03-16T19:23:38.984+00:00 query_text
+- 2026-03-16T19:23:38.984+00:00   Field required [type=missing, input_value={'equity_ids': [12345], 'event_ids': [67890]}, input_type=dict]
+- 2026-03-16T19:23:38.984+00:00     For further information visit https://errors.pydantic.dev/2.12/v/missing
+- 2026-03-16T19:23:38.984+00:00 2026-03-16 19:23:38,984 [WARNING] liquid_host.models.manager: generate_with_tools: reached max tool rounds (5), generating final answer
+- 2026-03-16T19:23:38.985+00:00 2026-03-16 19:23:38,984 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: starting (max_new_tokens=4096)
+- 2026-03-16T19:23:38.990+00:00 2026-03-16 19:23:38,990 [INFO] liquid_host.models.manager: _generate_stream_raw: calling model.generate (2043 input tokens) ...
+- 2026-03-16T19:23:39.975+00:00 INFO:     10.102.58.239:52924 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:40.298+00:00 2026-03-16 19:23:40,298 [INFO] liquid_host.models.manager: _generate_stream_raw [transformers]: done — 24 tokens in 1.3s (18.4 tok/s)
+- 2026-03-16T19:23:43.741+00:00 INFO:     10.41.23.147:2817 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:44.976+00:00 INFO:     10.102.58.239:52936 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:48.744+00:00 INFO:     10.41.32.205:42788 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:49.974+00:00 INFO:     10.102.58.239:48504 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:53.746+00:00 INFO:     10.41.12.129:58442 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:54.977+00:00 INFO:     10.102.58.239:48516 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:23:58.745+00:00 INFO:     10.41.9.89:31929 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:23:59.974+00:00 INFO:     10.102.58.239:48644 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:03.777+00:00 INFO:     10.41.6.155:7005 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:04.977+00:00 INFO:     10.102.58.239:48660 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:08.780+00:00 INFO:     10.41.43.135:56002 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:09.974+00:00 INFO:     10.102.58.239:55934 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:13.782+00:00 INFO:     10.41.41.131:22184 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:14.977+00:00 INFO:     10.102.58.239:55942 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:18.779+00:00 INFO:     10.41.12.129:33620 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:19.974+00:00 INFO:     10.102.58.239:57520 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:23.781+00:00 INFO:     10.41.32.205:55245 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:24.976+00:00 INFO:     10.102.58.239:57528 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:28.781+00:00 INFO:     10.41.43.135:61695 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:29.975+00:00 INFO:     10.102.58.239:33076 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:33.782+00:00 INFO:     10.41.41.131:45207 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:34.977+00:00 INFO:     10.102.58.239:33086 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:38.780+00:00 INFO:     10.41.12.129:32392 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:39.975+00:00 INFO:     10.102.58.239:44136 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:43.782+00:00 INFO:     10.41.43.135:12597 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:44.976+00:00 INFO:     10.102.58.239:44150 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:48.781+00:00 INFO:     10.41.24.92:4493 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:49.975+00:00 INFO:     10.102.58.239:46536 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:53.781+00:00 INFO:     10.41.11.230:37234 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:54.976+00:00 INFO:     10.102.58.239:46542 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:24:58.811+00:00 INFO:     10.41.6.155:27662 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:24:59.974+00:00 INFO:     10.102.58.239:57700 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:03.812+00:00 INFO:     10.41.6.155:47968 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:04.977+00:00 INFO:     10.102.58.239:57710 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:08.812+00:00 INFO:     10.41.41.131:38625 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:09.974+00:00 INFO:     10.102.58.239:54260 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:13.815+00:00 INFO:     10.41.41.131:6276 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:14.976+00:00 INFO:     10.102.58.239:54266 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:18.815+00:00 INFO:     10.41.43.135:3132 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:19.974+00:00 INFO:     10.102.58.239:59890 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:23.813+00:00 INFO:     10.41.24.173:37691 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:24.976+00:00 INFO:     10.102.58.239:59904 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:28.814+00:00 INFO:     10.41.9.89:54473 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:29.974+00:00 INFO:     10.102.58.239:43262 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:33.815+00:00 INFO:     10.41.43.135:5386 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:34.977+00:00 INFO:     10.102.58.239:43278 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:38.814+00:00 INFO:     10.41.24.173:14905 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:39.974+00:00 INFO:     10.102.58.239:57120 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:43.817+00:00 INFO:     10.41.24.173:31977 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:44.976+00:00 INFO:     10.102.58.239:57134 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:48.816+00:00 INFO:     10.41.23.147:37810 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:49.974+00:00 INFO:     10.102.58.239:43192 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:53.820+00:00 INFO:     10.41.41.131:50288 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:54.977+00:00 INFO:     10.102.58.239:43198 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:25:58.818+00:00 INFO:     10.41.41.131:35325 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:25:59.974+00:00 INFO:     10.102.58.239:37570 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:03.817+00:00 INFO:     10.41.11.230:27954 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:04.976+00:00 INFO:     10.102.58.239:37582 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:08.819+00:00 INFO:     10.41.41.131:56757 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:09.974+00:00 INFO:     10.102.58.239:54900 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:13.818+00:00 INFO:     10.41.9.89:45807 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:14.977+00:00 INFO:     10.102.58.239:54908 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:18.819+00:00 INFO:     10.41.43.135:64830 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:19.974+00:00 INFO:     10.102.58.239:60350 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:23.819+00:00 INFO:     10.41.24.173:40456 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:24.976+00:00 INFO:     10.102.58.239:60352 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:28.820+00:00 INFO:     10.41.24.92:39916 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:29.974+00:00 INFO:     10.102.58.239:53956 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:33.821+00:00 INFO:     10.41.11.230:6980 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:34.977+00:00 INFO:     10.102.58.239:53972 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:38.820+00:00 INFO:     10.41.24.173:44519 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:39.974+00:00 INFO:     10.102.58.239:47244 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:43.820+00:00 INFO:     10.41.24.173:12837 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:44.977+00:00 INFO:     10.102.58.239:47252 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:48.821+00:00 INFO:     10.41.11.230:26067 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:49.974+00:00 INFO:     10.102.58.239:52552 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:53.823+00:00 INFO:     10.41.43.135:61694 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:54.977+00:00 INFO:     10.102.58.239:52568 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:26:58.822+00:00 INFO:     10.41.11.230:41973 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:26:59.974+00:00 INFO:     10.102.58.239:42776 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:03.822+00:00 INFO:     10.41.6.155:34497 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:04.976+00:00 INFO:     10.102.58.239:42790 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:08.825+00:00 INFO:     10.41.43.135:59960 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:09.975+00:00 INFO:     10.102.58.239:53934 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:13.823+00:00 INFO:     10.41.12.129:50130 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:14.976+00:00 INFO:     10.102.58.239:53950 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:18.825+00:00 INFO:     10.41.6.155:64581 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:19.974+00:00 INFO:     10.102.58.239:54682 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:23.827+00:00 INFO:     10.41.41.131:5335 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:24.977+00:00 INFO:     10.102.58.239:54686 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:28.825+00:00 INFO:     10.41.24.173:21268 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:29.974+00:00 INFO:     10.102.58.239:54472 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:33.826+00:00 INFO:     10.41.6.155:24099 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:34.977+00:00 INFO:     10.102.58.239:54474 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:38.827+00:00 INFO:     10.41.6.155:17309 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:39.974+00:00 INFO:     10.102.58.239:34624 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:43.826+00:00 INFO:     10.41.23.147:2089 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:44.976+00:00 INFO:     10.102.58.239:34632 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:48.827+00:00 INFO:     10.41.11.230:23788 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:49.975+00:00 INFO:     10.102.58.239:59334 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:53.829+00:00 INFO:     10.41.43.135:22494 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:54.977+00:00 INFO:     10.102.58.239:59342 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:27:58.828+00:00 INFO:     10.41.12.129:6427 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:27:59.974+00:00 INFO:     10.102.58.239:36392 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:03.828+00:00 INFO:     10.41.9.89:63150 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:04.977+00:00 INFO:     10.102.58.239:36398 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:08.830+00:00 INFO:     10.41.11.230:63771 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:09.975+00:00 INFO:     10.102.58.239:36472 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:13.833+00:00 INFO:     10.41.12.129:62254 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:14.976+00:00 INFO:     10.102.58.239:36488 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:18.830+00:00 INFO:     10.41.24.173:20682 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:19.975+00:00 INFO:     10.102.58.239:35052 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:23.831+00:00 INFO:     10.41.11.230:34224 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:24.976+00:00 INFO:     10.102.58.239:35066 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:28.831+00:00 INFO:     10.41.6.155:49910 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:29.975+00:00 INFO:     10.102.58.239:57872 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:33.831+00:00 INFO:     10.41.24.92:17863 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:34.978+00:00 INFO:     10.102.58.239:57882 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:38.833+00:00 INFO:     10.41.6.155:46122 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:39.975+00:00 INFO:     10.102.58.239:38836 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:43.832+00:00 INFO:     10.41.24.92:3297 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:44.977+00:00 INFO:     10.102.58.239:38838 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:48.835+00:00 INFO:     10.41.43.135:25694 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:49.974+00:00 INFO:     10.102.58.239:33552 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:53.834+00:00 INFO:     10.41.12.129:51594 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:54.977+00:00 INFO:     10.102.58.239:33558 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:28:58.833+00:00 INFO:     10.41.24.92:37790 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:28:59.974+00:00 INFO:     10.102.58.239:55670 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:03.834+00:00 INFO:     10.41.12.129:1576 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:04.976+00:00 INFO:     10.102.58.239:55682 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:08.835+00:00 INFO:     10.41.43.135:59955 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:09.974+00:00 INFO:     10.102.58.239:34044 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:13.834+00:00 INFO:     10.41.23.147:54829 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:14.976+00:00 INFO:     10.102.58.239:34048 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:18.837+00:00 INFO:     10.41.41.131:11034 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:19.974+00:00 INFO:     10.102.58.239:36258 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:23.835+00:00 INFO:     10.41.24.173:37644 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:24.977+00:00 INFO:     10.102.58.239:36274 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:28.836+00:00 INFO:     10.41.6.155:45239 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:29.974+00:00 INFO:     10.102.58.239:60920 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:33.836+00:00 INFO:     10.41.9.89:48774 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:34.977+00:00 INFO:     10.102.58.239:60934 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:38.837+00:00 INFO:     10.41.9.89:11994 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:39.974+00:00 INFO:     10.102.58.239:55276 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:43.837+00:00 INFO:     10.41.11.230:22368 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:44.976+00:00 INFO:     10.102.58.239:55286 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:48.836+00:00 INFO:     10.41.9.89:26789 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:49.974+00:00 INFO:     10.102.58.239:55876 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:53.839+00:00 INFO:     10.41.41.131:20445 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:54.976+00:00 INFO:     10.102.58.239:55888 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:29:58.837+00:00 INFO:     10.41.11.230:37743 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:29:59.975+00:00 INFO:     10.102.58.239:38942 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:03.838+00:00 INFO:     10.41.23.147:39469 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:04.976+00:00 INFO:     10.102.58.239:38956 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:08.838+00:00 INFO:     10.41.6.155:58174 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:09.974+00:00 INFO:     10.102.58.239:60822 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:13.838+00:00 INFO:     10.41.24.173:56456 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:14.976+00:00 INFO:     10.102.58.239:60832 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:18.839+00:00 INFO:     10.41.23.147:33462 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:19.974+00:00 INFO:     10.102.58.239:50382 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:23.839+00:00 INFO:     10.41.11.230:6494 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:24.976+00:00 INFO:     10.102.58.239:50384 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:29.190+00:00 INFO:     10.41.41.131:2772 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:29.974+00:00 INFO:     10.102.58.239:57206 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:34.189+00:00 INFO:     10.41.24.92:7072 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:34.977+00:00 INFO:     10.102.58.239:57208 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:39.191+00:00 INFO:     10.41.24.92:18250 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:39.975+00:00 INFO:     10.102.58.239:36894 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:44.192+00:00 INFO:     10.41.41.131:65366 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:44.977+00:00 INFO:     10.102.58.239:36896 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:49.192+00:00 INFO:     10.41.41.131:60091 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:49.974+00:00 INFO:     10.102.58.239:49582 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:54.191+00:00 INFO:     10.41.24.92:56548 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:54.977+00:00 INFO:     10.102.58.239:49588 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:30:59.191+00:00 INFO:     10.41.23.147:61216 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:30:59.974+00:00 INFO:     10.102.58.239:51916 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:04.191+00:00 INFO:     10.41.12.129:36140 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:04.977+00:00 INFO:     10.102.58.239:51926 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:09.193+00:00 INFO:     10.41.24.92:50067 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:09.974+00:00 INFO:     10.102.58.239:59342 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:14.192+00:00 INFO:     10.41.24.173:6204 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:14.976+00:00 INFO:     10.102.58.239:59344 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:19.194+00:00 INFO:     10.41.9.89:63570 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:19.974+00:00 INFO:     10.102.58.239:50536 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:24.194+00:00 INFO:     10.41.23.147:7600 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:24.976+00:00 INFO:     10.102.58.239:50552 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:29.194+00:00 INFO:     10.41.6.155:4125 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:29.975+00:00 INFO:     10.102.58.239:43434 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:34.195+00:00 INFO:     10.41.23.147:19390 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:34.976+00:00 INFO:     10.102.58.239:43444 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:39.195+00:00 INFO:     10.41.12.129:4416 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:39.974+00:00 INFO:     10.102.58.239:39990 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:44.196+00:00 INFO:     10.41.9.89:23675 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:44.977+00:00 INFO:     10.102.58.239:39992 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:49.197+00:00 INFO:     10.41.32.205:65011 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:49.975+00:00 INFO:     10.102.58.239:53372 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:54.196+00:00 INFO:     10.41.23.147:12165 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:54.977+00:00 INFO:     10.102.58.239:53386 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:31:59.196+00:00 INFO:     10.41.6.155:3418 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:31:59.974+00:00 INFO:     10.102.58.239:56784 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:04.198+00:00 INFO:     10.41.41.131:33071 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:04.977+00:00 INFO:     10.102.58.239:56792 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:09.199+00:00 INFO:     10.41.41.131:10156 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:09.975+00:00 INFO:     10.102.58.239:51246 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:14.199+00:00 INFO:     10.41.24.173:29156 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:14.977+00:00 INFO:     10.102.58.239:51256 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:19.200+00:00 INFO:     10.41.43.135:45020 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:19.975+00:00 INFO:     10.102.58.239:54670 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:24.201+00:00 INFO:     10.41.43.135:61748 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:24.976+00:00 INFO:     10.102.58.239:54674 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:29.199+00:00 INFO:     10.41.23.147:8128 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:29.975+00:00 INFO:     10.102.58.239:51584 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:34.201+00:00 INFO:     10.41.43.135:35687 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:34.976+00:00 INFO:     10.102.58.239:51596 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:39.200+00:00 INFO:     10.41.24.173:56802 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:39.975+00:00 INFO:     10.102.58.239:37704 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:44.201+00:00 INFO:     10.41.24.173:41815 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:44.977+00:00 INFO:     10.102.58.239:37710 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:49.201+00:00 INFO:     10.41.6.155:11971 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:49.974+00:00 INFO:     10.102.58.239:60146 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:54.202+00:00 INFO:     10.41.9.89:64747 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:54.977+00:00 INFO:     10.102.58.239:60156 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:32:59.203+00:00 INFO:     10.41.11.230:13551 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:32:59.974+00:00 INFO:     10.102.58.239:36920 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:04.202+00:00 INFO:     10.41.9.89:60927 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:04.977+00:00 INFO:     10.102.58.239:36922 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:09.202+00:00 INFO:     10.41.24.92:18436 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:09.974+00:00 INFO:     10.102.58.239:36958 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:14.203+00:00 INFO:     10.41.43.135:29937 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:14.977+00:00 INFO:     10.102.58.239:36974 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:19.203+00:00 INFO:     10.41.24.92:62181 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:19.974+00:00 INFO:     10.102.58.239:32970 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:24.203+00:00 INFO:     10.41.6.155:56455 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:24.977+00:00 INFO:     10.102.58.239:32972 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:29.205+00:00 INFO:     10.41.41.131:34327 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:29.975+00:00 INFO:     10.102.58.239:51888 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:34.206+00:00 INFO:     10.41.41.131:42846 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:34.976+00:00 INFO:     10.102.58.239:51892 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:39.206+00:00 INFO:     10.41.41.131:14069 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:39.974+00:00 INFO:     10.102.58.239:57924 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:44.205+00:00 INFO:     10.41.9.89:1281 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:44.977+00:00 INFO:     10.102.58.239:57930 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:49.205+00:00 INFO:     10.41.23.147:30042 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:49.975+00:00 INFO:     10.102.58.239:51148 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:54.207+00:00 INFO:     10.41.24.173:51539 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:54.977+00:00 INFO:     10.102.58.239:51164 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:33:59.208+00:00 INFO:     10.41.41.131:1233 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:33:59.974+00:00 INFO:     10.102.58.239:49218 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:04.207+00:00 INFO:     10.41.24.173:2712 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:04.977+00:00 INFO:     10.102.58.239:49228 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:09.207+00:00 INFO:     10.41.23.147:49228 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:09.974+00:00 INFO:     10.102.58.239:52832 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:14.209+00:00 INFO:     10.41.24.92:39203 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:14.977+00:00 INFO:     10.102.58.239:52840 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:19.209+00:00 INFO:     10.41.9.89:30852 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:19.974+00:00 INFO:     10.102.58.239:36980 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:24.209+00:00 INFO:     10.41.12.129:32269 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:24.977+00:00 INFO:     10.102.58.239:36992 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:29.209+00:00 INFO:     10.41.9.89:49546 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:29.974+00:00 INFO:     10.102.58.239:50818 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:34.209+00:00 INFO:     10.41.24.173:43144 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:34.976+00:00 INFO:     10.102.58.239:50820 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:39.210+00:00 INFO:     10.41.24.173:46271 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:39.974+00:00 INFO:     10.102.58.239:51436 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:44.210+00:00 INFO:     10.41.23.147:41336 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:44.976+00:00 INFO:     10.102.58.239:51450 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:49.212+00:00 INFO:     10.41.24.173:57105 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:49.974+00:00 INFO:     10.102.58.239:33902 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:54.212+00:00 INFO:     10.41.43.135:65119 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:54.976+00:00 INFO:     10.102.58.239:33912 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:34:59.212+00:00 INFO:     10.41.43.135:23587 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:34:59.974+00:00 INFO:     10.102.58.239:51444 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:04.212+00:00 INFO:     10.41.24.92:33763 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:04.977+00:00 INFO:     10.102.58.239:51446 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:09.212+00:00 INFO:     10.41.23.147:18404 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:09.974+00:00 INFO:     10.102.58.239:34470 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:14.214+00:00 INFO:     10.41.32.205:32947 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:14.977+00:00 INFO:     10.102.58.239:34484 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:19.215+00:00 INFO:     10.41.43.135:1490 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:19.974+00:00 INFO:     10.102.58.239:58986 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:24.216+00:00 INFO:     10.41.41.131:24931 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:24.977+00:00 INFO:     10.102.58.239:58992 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:29.215+00:00 INFO:     10.41.41.131:50182 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:29.974+00:00 INFO:     10.102.58.239:48924 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:34.214+00:00 INFO:     10.41.11.230:38701 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:34.977+00:00 INFO:     10.102.58.239:48936 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:39.214+00:00 INFO:     10.41.9.89:8247 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:39.974+00:00 INFO:     10.102.58.239:59364 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:44.216+00:00 INFO:     10.41.24.173:27675 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:44.977+00:00 INFO:     10.102.58.239:59380 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:49.217+00:00 INFO:     10.41.32.205:5844 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:49.974+00:00 INFO:     10.102.58.239:57338 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:54.216+00:00 INFO:     10.41.11.230:32440 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:54.977+00:00 INFO:     10.102.58.239:57346 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:35:59.217+00:00 INFO:     10.41.23.147:57436 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:35:59.975+00:00 INFO:     10.102.58.239:57478 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:04.217+00:00 INFO:     10.41.12.129:51742 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:04.977+00:00 INFO:     10.102.58.239:57482 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:09.219+00:00 INFO:     10.41.41.131:54725 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:09.974+00:00 INFO:     10.102.58.239:48500 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:14.306+00:00 INFO:     10.41.32.205:24463 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:14.977+00:00 INFO:     10.102.58.239:48514 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:19.307+00:00 INFO:     10.41.32.205:51318 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:19.974+00:00 INFO:     10.102.58.239:47584 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:24.307+00:00 INFO:     10.41.24.92:16483 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:24.976+00:00 INFO:     10.102.58.239:47586 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:29.308+00:00 INFO:     10.41.11.230:6439 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:29.974+00:00 INFO:     10.102.58.239:50376 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:34.307+00:00 INFO:     10.41.23.147:3316 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:34.977+00:00 INFO:     10.102.58.239:50382 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:39.307+00:00 INFO:     10.41.6.155:44902 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:39.974+00:00 INFO:     10.102.58.239:55802 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:44.308+00:00 INFO:     10.41.11.230:55638 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:44.977+00:00 INFO:     10.102.58.239:55812 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:49.309+00:00 INFO:     10.41.32.205:1573 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:49.974+00:00 INFO:     10.102.58.239:51650 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:54.308+00:00 INFO:     10.41.23.147:22685 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:54.977+00:00 INFO:     10.102.58.239:51652 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:36:59.309+00:00 INFO:     10.41.9.89:57590 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:36:59.974+00:00 INFO:     10.102.58.239:53700 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:04.310+00:00 INFO:     10.41.24.173:30494 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:04.976+00:00 INFO:     10.102.58.239:53708 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:09.311+00:00 INFO:     10.41.6.155:20399 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:09.975+00:00 INFO:     10.102.58.239:42172 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:14.310+00:00 INFO:     10.41.11.230:60891 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:14.976+00:00 INFO:     10.102.58.239:42188 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:19.312+00:00 INFO:     10.41.41.131:35782 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:19.974+00:00 INFO:     10.102.58.239:60522 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:24.312+00:00 INFO:     10.41.24.92:42598 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:24.977+00:00 INFO:     10.102.58.239:60528 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:29.312+00:00 INFO:     10.41.41.131:1070 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:29.974+00:00 INFO:     10.102.58.239:54450 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:34.311+00:00 INFO:     10.41.23.147:33946 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:34.977+00:00 INFO:     10.102.58.239:54464 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:39.310+00:00 INFO:     10.41.24.92:40763 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:39.974+00:00 INFO:     10.102.58.239:55354 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:44.312+00:00 INFO:     10.41.43.135:57199 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:44.977+00:00 INFO:     10.102.58.239:55370 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:49.312+00:00 INFO:     10.41.9.89:41997 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:49.974+00:00 INFO:     10.102.58.239:55494 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:54.312+00:00 INFO:     10.41.24.173:64563 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:54.977+00:00 INFO:     10.102.58.239:55502 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:37:59.313+00:00 INFO:     10.41.12.129:53205 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:37:59.974+00:00 INFO:     10.102.58.239:53120 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:04.315+00:00 INFO:     10.41.43.135:44157 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:04.977+00:00 INFO:     10.102.58.239:53130 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:09.315+00:00 INFO:     10.41.24.92:38127 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:09.974+00:00 INFO:     10.102.58.239:39124 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:14.315+00:00 INFO:     10.41.24.173:29994 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:14.977+00:00 INFO:     10.102.58.239:39134 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:19.317+00:00 INFO:     10.41.43.135:54737 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:19.974+00:00 INFO:     10.102.58.239:43914 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:24.316+00:00 INFO:     10.41.23.147:29410 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:24.977+00:00 INFO:     10.102.58.239:43920 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:29.316+00:00 INFO:     10.41.24.92:45417 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:29.974+00:00 INFO:     10.102.58.239:40876 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:34.318+00:00 INFO:     10.41.41.131:26821 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:34.977+00:00 INFO:     10.102.58.239:40878 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:39.318+00:00 INFO:     10.41.11.230:5376 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:39.974+00:00 INFO:     10.102.58.239:56120 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:44.318+00:00 INFO:     10.41.23.147:21127 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:44.977+00:00 INFO:     10.102.58.239:56122 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:49.318+00:00 INFO:     10.41.24.173:56002 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:49.975+00:00 INFO:     10.102.58.239:37174 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:54.318+00:00 INFO:     10.41.6.155:23916 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:54.976+00:00 INFO:     10.102.58.239:37190 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:38:59.320+00:00 INFO:     10.41.41.131:46342 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:38:59.974+00:00 INFO:     10.102.58.239:57782 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:04.319+00:00 INFO:     10.41.24.92:52188 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:04.976+00:00 INFO:     10.102.58.239:57794 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:09.319+00:00 INFO:     10.41.24.173:28539 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:09.975+00:00 INFO:     10.102.58.239:43602 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:14.320+00:00 INFO:     10.41.11.230:54508 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:14.977+00:00 INFO:     10.102.58.239:43610 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:19.321+00:00 INFO:     10.41.12.129:7603 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:19.975+00:00 INFO:     10.102.58.239:37512 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:24.322+00:00 INFO:     10.41.11.230:60292 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:24.977+00:00 INFO:     10.102.58.239:37516 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:29.321+00:00 INFO:     10.41.12.129:10640 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:29.974+00:00 INFO:     10.102.58.239:45830 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:34.322+00:00 INFO:     10.41.23.147:63736 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:34.977+00:00 INFO:     10.102.58.239:45846 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:39.355+00:00 INFO:     10.41.9.89:33919 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:39.974+00:00 INFO:     10.102.58.239:49394 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:44.353+00:00 INFO:     10.41.24.92:64682 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:44.977+00:00 INFO:     10.102.58.239:49402 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:49.353+00:00 INFO:     10.41.24.173:38659 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:49.974+00:00 INFO:     10.102.58.239:55382 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:54.354+00:00 INFO:     10.41.43.135:11229 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:54.977+00:00 INFO:     10.102.58.239:55388 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:39:59.362+00:00 INFO:     10.41.12.129:20108 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:39:59.974+00:00 INFO:     10.102.58.239:59418 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:04.355+00:00 INFO:     10.41.41.131:2039 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:04.976+00:00 INFO:     10.102.58.239:59434 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:09.355+00:00 INFO:     10.41.6.155:7579 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:09.974+00:00 INFO:     10.102.58.239:52094 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:14.356+00:00 INFO:     10.41.41.131:16208 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:14.977+00:00 INFO:     10.102.58.239:52110 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:19.355+00:00 INFO:     10.41.24.92:39633 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:19.974+00:00 INFO:     10.102.58.239:46996 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:24.720+00:00 INFO:     10.41.23.147:56423 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:24.976+00:00 INFO:     10.102.58.239:47006 - "GET /health HTTP/1.1" 200 OK
+- 2026-03-16T19:40:29.719+00:00 INFO:     10.41.43.135:63689 - "GET /status HTTP/1.1" 200 OK
+- 2026-03-16T19:40:29.974+00:00 INFO:     10.102.58.239:56284 - "GET /health HTTP/1.1" 200 OK

@@ -119,8 +119,8 @@ class McpClientManager:
                 entry = {**entry, "url": urlunparse(parsed._replace(query=new_query))}
             try:
                 await self._connect_server(entry)
-            except Exception:
-                logger.exception("Failed to connect to MCP server '%s'", entry.get("name"))
+            except BaseException as exc:
+                logger.error("Failed to connect to MCP server '%s': %s", entry.get("name"), exc)
 
     async def _connect_server(self, entry: dict) -> None:
         name = entry["name"]
@@ -129,22 +129,38 @@ class McpClientManager:
 
         logger.info("Connecting to MCP server '%s' at %s (transport=%s) ...", name, url, transport)
 
-        if transport == "sse":
-            read_stream, write_stream = await self._exit_stack.enter_async_context(
-                sse_client(url)
-            )
-        elif transport in ("streamable_http", "streamable-http", "http"):
-            read_stream, write_stream, _ = await self._exit_stack.enter_async_context(
-                streamable_http_client(url)
-            )
-        else:
-            logger.error("Unsupported transport '%s' for server '%s'", transport, name)
-            return
+        # Each server gets its own exit stack so a failure in one doesn't
+        # corrupt the shared stack or crash the app.
+        server_stack = AsyncExitStack()
 
-        session = await self._exit_stack.enter_async_context(
-            ClientSession(read_stream, write_stream)
-        )
-        await session.initialize()
+        try:
+            if transport == "sse":
+                read_stream, write_stream = await server_stack.enter_async_context(
+                    sse_client(url)
+                )
+            elif transport in ("streamable_http", "streamable-http", "http"):
+                read_stream, write_stream, _ = await server_stack.enter_async_context(
+                    streamable_http_client(url)
+                )
+            else:
+                logger.error("Unsupported transport '%s' for server '%s'", transport, name)
+                await server_stack.aclose()
+                return
+
+            session = await server_stack.enter_async_context(
+                ClientSession(read_stream, write_stream)
+            )
+            await session.initialize()
+        except BaseException:
+            # Clean up the per-server stack on any failure (including ExceptionGroups)
+            try:
+                await server_stack.aclose()
+            except Exception:
+                pass
+            raise
+
+        # Success — register the server stack for cleanup later
+        await self._exit_stack.enter_async_context(server_stack)
 
         tools_result = await session.list_tools()
         tools: list[McpToolInfo] = []
@@ -197,7 +213,11 @@ class McpClientManager:
     # ── Tool execution ─────────────────────────────────────────────
 
     async def call_tool(self, tool_name: str, arguments: dict) -> str:
-        """Call a tool by name and return the result as a string."""
+        """Call a tool by name and return the result as a string.
+
+        If the call fails (e.g. stale SSE connection), automatically
+        reconnects to the server and retries once before returning an error.
+        """
         server_name = self._tool_routing.get(tool_name)
         if not server_name:
             return json.dumps({"error": f"Unknown tool: {tool_name}"})
@@ -208,21 +228,79 @@ class McpClientManager:
 
         logger.info("Calling tool '%s' on server '%s' with args: %s", tool_name, server_name, arguments)
 
-        try:
-            result = await conn.session.call_tool(name=tool_name, arguments=arguments)
-        except Exception as e:
-            logger.exception("Tool call '%s' failed", tool_name)
-            return json.dumps({"error": str(e)})
+        for attempt in range(2):
+            try:
+                result = await conn.session.call_tool(name=tool_name, arguments=arguments)
 
-        # Flatten content blocks into a single string
-        parts = []
-        for block in result.content:
-            if hasattr(block, "text"):
-                parts.append(block.text)
-            else:
-                parts.append(str(block))
+                # Check for empty error responses that indicate a stale connection
+                parts = []
+                for block in result.content:
+                    if hasattr(block, "text"):
+                        parts.append(block.text)
+                    else:
+                        parts.append(str(block))
+                text = "\n".join(parts)
 
-        return "\n".join(parts)
+                # Detect stale connection: empty error or completely empty response
+                if text in ('{"error": ""}', '{"error":""}', '') and attempt == 0:
+                    logger.warning("Tool '%s' returned empty error — connection may be stale, reconnecting...", tool_name)
+                    await self._reconnect_server(server_name)
+                    conn = self._connections.get(server_name)
+                    if not conn:
+                        return json.dumps({"error": f"Failed to reconnect to server '{server_name}'"})
+                    continue
+
+                return text
+
+            except Exception as e:
+                if attempt == 0:
+                    logger.warning("Tool call '%s' failed (%s) — reconnecting and retrying...", tool_name, e)
+                    try:
+                        await self._reconnect_server(server_name)
+                        conn = self._connections.get(server_name)
+                        if not conn:
+                            return json.dumps({"error": f"Failed to reconnect to server '{server_name}'"})
+                    except Exception as reconnect_err:
+                        logger.error("Reconnection to '%s' failed: %s", server_name, reconnect_err)
+                        return json.dumps({"error": f"Tool call failed and reconnection failed: {e}"})
+                else:
+                    logger.exception("Tool call '%s' failed after retry", tool_name)
+                    return json.dumps({"error": str(e)})
+
+        return json.dumps({"error": "Tool call failed after retry"})
+
+    async def _reconnect_server(self, server_name: str) -> None:
+        """Disconnect and reconnect a single MCP server."""
+        logger.info("Reconnecting MCP server '%s'...", server_name)
+
+        # Find the original config entry for this server
+        config = json.loads(self._config_path.read_text())
+        servers = config.get("servers", [])
+        entry = None
+        for s in servers:
+            if s.get("name") == server_name:
+                entry = dict(s)
+                break
+
+        if not entry:
+            raise ValueError(f"Server '{server_name}' not found in config")
+
+        # Apply API key override
+        if self._api_key_override:
+            from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+            parsed = urlparse(entry["url"])
+            params = parse_qs(parsed.query, keep_blank_values=True)
+            params["api_key"] = [self._api_key_override]
+            new_query = urlencode(params, doseq=True)
+            entry = {**entry, "url": urlunparse(parsed._replace(query=new_query))}
+
+        # Remove old connection (tools stay in routing table)
+        old_conn = self._connections.pop(server_name, None)
+        old_tools = old_conn.tools if old_conn else []
+
+        # Reconnect
+        await self._connect_server(entry)
+        logger.info("Reconnected to MCP server '%s' successfully", server_name)
 
     # ── Parse model output ─────────────────────────────────────────
 

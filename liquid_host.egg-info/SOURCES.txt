@@ -10,11 +10,13 @@ liquid_host.egg-info/entry_points.txt
 liquid_host.egg-info/requires.txt
 liquid_host.egg-info/top_level.txt
 liquid_host/cli/__init__.py
+liquid_host/cli/logs.py
 liquid_host/cli/main.py
 liquid_host/models/__init__.py
 liquid_host/models/llamacpp_backend.py
 liquid_host/models/manager.py
 liquid_host/server/__init__.py
 liquid_host/server/app.py
+liquid_host/server/inference_log.py
 liquid_host/training/__init__.py
 liquid_host/training/finetune.py

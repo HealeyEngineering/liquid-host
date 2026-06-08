@@ -337,6 +337,7 @@
   <h1><a href="/">Liquid Host</a> <span>/ Training Data</span></h1>
   <div class="header-actions">
     <a href="/tools" style="color: var(--text-dim); text-decoration: none; font-size: 13px; margin-right: 8px;">Tools</a>
+    <a href="/logs" style="color: var(--text-dim); text-decoration: none; font-size: 13px; margin-right: 8px;">Logs</a>
     <span id="sync-badge" class="badge synced" style="display:none"></span>
     <span id="count-badge" class="badge count">0 examples</span>
     <button class="btn" id="add-btn" disabled>+ Add Example</button>
@@ -777,6 +778,8 @@ document.addEventListener("keydown", (e) => {
       // Backend already has repo + token — hide connect panel and auto-load
       document.getElementById("config-panel").style.display = "none";
       await loadExamples();
+      addBtn.disabled = false;
+      syncBtn.disabled = false;
     }
   } catch {}
 })();

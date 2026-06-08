@@ -20,7 +20,7 @@ Requires-Dist: flash-attn>=2.5.0; extra == "flash-attn"
 Provides-Extra: vllm
 Requires-Dist: vllm>=0.10.2; extra == "vllm"
 Provides-Extra: training
-Requires-Dist: peft>=0.14.0; extra == "training"
+Requires-Dist: peft>=0.18.0; extra == "training"
 Requires-Dist: trl>=0.15.0; extra == "training"
 Requires-Dist: datasets>=3.0.0; extra == "training"
 Requires-Dist: bitsandbytes>=0.45.0; extra == "training"

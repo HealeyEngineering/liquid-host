@@ -575,5 +575,79 @@ def data_validate(path: str) -> None:
             console.print(f"  [yellow]{w}[/yellow]")
 
 
+# ── logs (inference endpoint logs) ────────────────────────────────
+
+
+from liquid_host.cli.logs import logs as logs_cmd  # noqa: E402
+
+cli.add_command(logs_cmd)
+
+
+# ── logs-local (local inference logs) ─────────────────────────────
+
+
+@cli.command("logs-local")
+@click.option("--tail", "tail_n", type=int, default=50, help="Show last N records")
+@click.option("--log-dir", default=None, help="Log directory (default: ~/.cache/liquid-host/logs/)")
+@click.option("--json", "as_json", is_flag=True, help="Output raw JSON records")
+def logs_local(tail_n: int, log_dir: str | None, as_json: bool) -> None:
+    """Show local inference log records."""
+    from liquid_host.server.inference_log import InferenceLogger
+
+    logger = InferenceLogger(log_dir=log_dir)
+    records = logger.read_recent(n=tail_n)
+
+    if not records:
+        console.print("[dim]No inference logs found.[/dim]")
+        return
+
+    if as_json:
+        import json
+        for r in records:
+            console.print(json.dumps(r))
+        return
+
+    table = Table(title=f"Last {len(records)} Inference Records")
+    table.add_column("Time", style="cyan", width=19)
+    table.add_column("Model", style="dim", max_width=20)
+    table.add_column("Msgs", justify="right", width=4)
+    table.add_column("Tools", justify="right", width=5)
+    table.add_column("Resp Len", justify="right", width=8)
+    table.add_column("Duration", justify="right", width=8)
+    table.add_column("Error", style="red", max_width=30)
+
+    for r in records:
+        ts = r.get("timestamp", "")[:19]
+        model = r.get("model", "?")
+        msgs = str(r.get("messages_in", 0))
+        tools = str(len(r.get("tool_calls", [])))
+        resp_len = str(r.get("response_length", 0))
+        dur = f"{r.get('duration_ms', 0):.0f}ms"
+        err = r.get("error") or ""
+        table.add_row(ts, model, msgs, tools, resp_len, dur, err[:30])
+
+    console.print(table)
+
+
+@cli.command("logs-push")
+@click.option("--repo", required=True, help="HF dataset repo (e.g. user/my-inference-logs)")
+@click.option("--hf-token", envvar="HF_TOKEN", default=None, help="HF API token")
+@click.option("--log-dir", default=None, help="Log directory")
+def logs_push(repo: str, hf_token: str | None, log_dir: str | None) -> None:
+    """Push local inference logs to a HuggingFace dataset repo."""
+    from liquid_host.server.inference_log import InferenceLogger
+
+    if not hf_token:
+        console.print("[red]Error:[/red] HF token required. Set HF_TOKEN or pass --hf-token.")
+        raise SystemExit(1)
+
+    logger = InferenceLogger(log_dir=log_dir)
+    try:
+        url = logger.push_to_hub(repo, hf_token)
+        console.print(f"[green bold]Done![/green bold] Logs pushed to [cyan]{url}[/cyan]")
+    except ValueError as e:
+        console.print(f"[yellow]{e}[/yellow]")
+
+
 if __name__ == "__main__":
     cli()

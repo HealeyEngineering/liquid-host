@@ -18,6 +18,12 @@ from pydantic import BaseModel, Field
 from liquid_host.config import GenerationConfig, MODEL_REGISTRY, get_model_spec
 from liquid_host.mcp_client import McpClientManager
 from liquid_host.models.manager import ModelManager
+from liquid_host.server.inference_log import (
+    get_inference_logger,
+    InferenceRecord,
+    ToolCallRecord,
+    RoundRecord,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -178,13 +184,21 @@ Keep your <think> block extremely brief — 2-3 short sentences maximum. State o
 
 ## Tool Calling
 
-You may call multiple tools in a single response. Call as many as needed.
+You may call multiple tools in a single response. Call as many as needed. Always use the XML JSON format shown below.
 
 Before each tool call, write a short status message (under 100 characters) describing what you are doing. This is shown to the user while the tool runs. Avoid leading exclamations like "Great!" or "Perfect!"
 
 Example:
 Searching for recent NFLX earnings events...
-[find_events(bloomberg_tickers=['NFLX:US'], event_type='earnings')]
+[find_events(bloomberg_ticker="NFLX:US", event_type="earnings", start_date="2025-01-01", end_date="2026-03-19", page_size=100, exclude_instructions=True, self_identification="aierachat")]
+
+### Date Range Rules for find_events
+
+- start_date and end_date are REQUIRED for find_events.
+- When the user says "latest" or "most recent" earnings call, use a WIDE date range: start_date at least 6 months back from today, end_date = today. Most companies report quarterly, so the latest call could be up to 3-4 months ago.
+- When the user specifies a quarter (e.g. "Q4 2025"), set start_date to the quarter start and end_date 3 months after quarter end to capture the call.
+- When unsure, default to start_date = 12 months ago, end_date = today. It is always better to cast a wider net and get more results than to miss the event.
+- NEVER use a date range shorter than 3 months for "latest" or "recent" queries.
 
 ### Critical Rules
 
@@ -266,6 +280,12 @@ Searching for recent NFLX earnings events...
 - Do not invite document uploads
 - Do not include disclaimers about data limitations
 - Present analysis as definitive within available data"""
+
+    # Add available tool names (compact list, not full schemas)
+    if _mcp and _mcp.is_connected:
+        tool_names = [t.name for t in _mcp.tools]
+        system_text += f"\n\n---\n\n## Available Tools\n\n{', '.join(tool_names)}"
+
     if messages and messages[0]["role"] == "system":
         messages[0]["content"] = system_text + "\n\n" + messages[0]["content"]
     else:
@@ -316,11 +336,31 @@ Searching for recent NFLX earnings events...
         )
 
     logger.info("Routing to non-streaming generate")
+    t0 = time.time()
     response_text = mgr.generate(messages, config)
+    duration_ms = (time.time() - t0) * 1000
     logger.info("Response generated (%d chars)", len(response_text))
 
+    completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
+    # Extract last user message for logging
+    user_prompt = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+    _log_inference(
+        completion_id,
+        model=mgr.loaded_model_name or "unknown",
+        messages_in=len(messages),
+        temperature=request.temperature,
+        max_tokens=request.max_tokens,
+        stream=False,
+        use_tools=False,
+        prompt=user_prompt,
+        response_text=response_text,
+        response_length=len(response_text),
+        finish_reason="stop",
+        duration_ms=duration_ms,
+    )
+
     return ChatCompletionResponse(
-        id=f"chatcmpl-{uuid.uuid4().hex[:12]}",
+        id=completion_id,
         created=int(time.time()),
         model=mgr.loaded_model_name or "unknown",
         choices=[
@@ -330,14 +370,65 @@ Searching for recent NFLX earnings events...
     )
 
 
+def _log_inference(
+    completion_id: str,
+    *,
+    model: str,
+    messages_in: int,
+    temperature: float,
+    max_tokens: int,
+    stream: bool,
+    use_tools: bool,
+    prompt: str = "",
+    response_text: str = "",
+    response_length: int = 0,
+    finish_reason: str = "",
+    duration_ms: float = 0,
+    tool_calls: list[ToolCallRecord] | None = None,
+    rounds: list[RoundRecord] | None = None,
+    total_rounds: int = 0,
+    error: str | None = None,
+) -> None:
+    """Log an inference record (non-blocking)."""
+    try:
+        ilog = get_inference_logger()
+        ilog.log(InferenceRecord(
+            id=completion_id,
+            model=model,
+            prompt=prompt,
+            response_text=response_text,
+            messages_in=messages_in,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=stream,
+            use_tools=use_tools,
+            response_length=response_length,
+            finish_reason=finish_reason,
+            duration_ms=duration_ms,
+            tool_calls=tool_calls or [],
+            rounds=rounds or [],
+            total_rounds=total_rounds,
+            error=error,
+        ))
+    except Exception:
+        logger.debug("Failed to write inference log", exc_info=True)
+
+
 async def _stream_response(mgr: ModelManager, messages: list[dict], config: GenerationConfig):
     """Yield SSE chunks for streaming responses."""
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
     created = int(time.time())
     model = mgr.loaded_model_name or "unknown"
+    t0 = time.time()
+    total_tokens = 0
+    response_parts: list[str] = []
+    error_msg = None
+    user_prompt = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
 
     try:
         async for token, _ in mgr._async_stream_raw(messages, config):
+            total_tokens += len(token)
+            response_parts.append(token)
             chunk = {
                 "id": completion_id,
                 "object": "chat.completion.chunk",
@@ -354,6 +445,7 @@ async def _stream_response(mgr: ModelManager, messages: list[dict], config: Gene
             yield f"data: {__import__('json').dumps(chunk)}\n\n"
     except Exception as e:
         logger.error("_stream_response: generation failed — %s", e)
+        error_msg = str(e)
         error_chunk = {
             "id": completion_id,
             "object": "chat.completion.chunk",
@@ -364,6 +456,11 @@ async def _stream_response(mgr: ModelManager, messages: list[dict], config: Gene
         }
         yield f"data: {__import__('json').dumps(error_chunk)}\n\n"
         yield "data: [DONE]\n\n"
+        _log_inference(completion_id, model=model, messages_in=0, temperature=0,
+                       max_tokens=0, stream=True, use_tools=False,
+                       prompt=user_prompt, response_text="".join(response_parts),
+                       response_length=total_tokens, finish_reason="error",
+                       duration_ms=(time.time() - t0) * 1000, error=error_msg)
         return
 
     # Final chunk
@@ -377,12 +474,27 @@ async def _stream_response(mgr: ModelManager, messages: list[dict], config: Gene
     yield f"data: {__import__('json').dumps(final)}\n\n"
     yield "data: [DONE]\n\n"
 
+    _log_inference(completion_id, model=model, messages_in=0, temperature=0,
+                   max_tokens=0, stream=True, use_tools=False,
+                   prompt=user_prompt, response_text="".join(response_parts),
+                   response_length=total_tokens, finish_reason="stop",
+                   duration_ms=(time.time() - t0) * 1000)
+
 
 async def _stream_tool_response(mgr: ModelManager, messages: list[dict], config: GenerationConfig):
     """Yield SSE chunks for tool-calling workflow with status updates."""
     completion_id = f"chatcmpl-{uuid.uuid4().hex[:12]}"
     created = int(time.time())
     model = mgr.loaded_model_name or "unknown"
+    t0 = time.time()
+    total_chars = 0
+    response_parts: list[str] = []
+    tool_records: list[ToolCallRecord] = []
+    round_records: list[RoundRecord] = []
+    current_round_tools: list[ToolCallRecord] = []
+    finish = "stop"
+    error_msg = None
+    user_prompt = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
 
     async for event in mgr.generate_with_tools(messages, _mcp, config):
         event_type = event["type"]
@@ -419,7 +531,34 @@ async def _stream_tool_response(mgr: ModelManager, messages: list[dict], config:
             }
             yield f"data: {__import__('json').dumps(chunk)}\n\n"
 
+        elif event_type == "round_info":
+            # Capture per-round details for logging
+            current_round_tools = []
+            round_records.append(RoundRecord(
+                round=event.get("round", 0),
+                raw_output=event.get("raw_output", ""),
+                tool_calls_found=event.get("tool_calls_found", 0),
+            ))
+
+        elif event_type == "tool_call":
+            # Track tool calls for logging (event has name, arguments, result_length, duration_ms)
+            tc = ToolCallRecord(
+                name=event.get("name", ""),
+                arguments=event.get("arguments", {}),
+                result_length=event.get("result_length", 0),
+                result_preview=event.get("result_preview", ""),
+                duration_ms=event.get("duration_ms", 0),
+                error=event.get("error"),
+            )
+            tool_records.append(tc)
+            current_round_tools.append(tc)
+            # Attach tool calls to the current round record
+            if round_records:
+                round_records[-1].tool_calls = list(current_round_tools)
+
         elif event_type == "token":
+            total_chars += len(event["content"])
+            response_parts.append(event["content"])
             chunk = {
                 "id": completion_id,
                 "object": "chat.completion.chunk",
@@ -474,6 +613,8 @@ async def _stream_tool_response(mgr: ModelManager, messages: list[dict], config:
             yield f"data: {__import__('json').dumps(chunk)}\n\n"
 
         elif event_type == "error":
+            error_msg = event["content"]
+            finish = "error"
             error_chunk = {
                 "id": completion_id,
                 "object": "chat.completion.chunk",
@@ -490,6 +631,13 @@ async def _stream_tool_response(mgr: ModelManager, messages: list[dict], config:
             }
             yield f"data: {__import__('json').dumps(error_chunk)}\n\n"
             yield "data: [DONE]\n\n"
+            _log_inference(completion_id, model=model, messages_in=0, temperature=0,
+                           max_tokens=0, stream=True, use_tools=True,
+                           prompt=user_prompt, response_text="".join(response_parts),
+                           response_length=total_chars, finish_reason=finish,
+                           duration_ms=(time.time() - t0) * 1000,
+                           tool_calls=tool_records, rounds=round_records,
+                           total_rounds=len(round_records), error=error_msg)
 
         elif event_type == "done":
             final = {
@@ -501,6 +649,13 @@ async def _stream_tool_response(mgr: ModelManager, messages: list[dict], config:
             }
             yield f"data: {__import__('json').dumps(final)}\n\n"
             yield "data: [DONE]\n\n"
+            _log_inference(completion_id, model=model, messages_in=0, temperature=0,
+                           max_tokens=0, stream=True, use_tools=True,
+                           prompt=user_prompt, response_text="".join(response_parts),
+                           response_length=total_chars, finish_reason="stop",
+                           duration_ms=(time.time() - t0) * 1000,
+                           rounds=round_records, total_rounds=len(round_records),
+                           tool_calls=tool_records)
 
 
 # ── Model management endpoints ────────────────────────────────────
@@ -788,6 +943,35 @@ async def sync_training_data(request: SyncRequest):
         raise HTTPException(502, f"Failed to push dataset: {e}")
 
     return {"status": "synced", "total": len(records)}
+
+
+# ── Logs UI & API ─────────────────────────────────────────────────
+
+
+@app.get("/logs", include_in_schema=False)
+async def logs_page():
+    return FileResponse(str(_STATIC_DIR / "logs.html"))
+
+
+@app.get("/api/logs/local")
+async def api_logs_local(tail: int = 100):
+    """Return recent local inference log records."""
+    ilog = get_inference_logger()
+    records = ilog.read_recent(n=tail)
+    return {"total": len(records), "records": records}
+
+
+@app.get("/api/logs/local/files")
+async def api_logs_local_files():
+    """List local log files with sizes."""
+    ilog = get_inference_logger()
+    files = ilog.list_files()
+    return {
+        "files": [
+            {"name": f.name, "size_bytes": f.stat().st_size}
+            for f in files
+        ]
+    }
 
 
 # ── Factory ────────────────────────────────────────────────────────

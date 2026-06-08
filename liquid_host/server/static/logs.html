@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Host — Logs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3347;
+    --text: #e1e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c8cff;
+    --accent-dim: #4a62b3;
+    --error: #ff6b6b;
+    --success: #51cf66;
+    --warning: #ffd43b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ─────────────────────────────── */
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
+  header h1 a { color: var(--text); text-decoration: none; }
+  header h1 a:hover { color: var(--accent); }
+  header h1 span { color: var(--text-dim); font-weight: 400; }
+
+  .nav-links { display: flex; gap: 12px; align-items: center; }
+  .nav-links a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .nav-links a:hover { color: var(--text); background: var(--surface2); }
+
+  /* ── Controls ────────────────────────────── */
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .controls label { font-size: 12px; color: var(--text-dim); }
+
+  .controls select, .controls input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .controls select:focus, .controls input:focus { outline: none; border-color: var(--accent-dim); }
+
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .btn:hover { border-color: var(--accent-dim); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-dim); }
+  .btn.active { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+
+  .spacer { flex: 1; }
+
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .badge.count { background: var(--surface2); color: var(--text-dim); }
+  .badge.live { background: #1a3a2a; color: var(--success); }
+
+  /* ── Log table ───────────────────────────── */
+
+  .log-container {
+    flex: 1;
+    overflow: auto;
+    padding: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:hover { background: var(--surface); }
+
+  .ts { color: var(--accent); white-space: nowrap; font-family: monospace; font-size: 12px; }
+  .model { color: var(--text-dim); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .num { text-align: right; font-family: monospace; font-size: 12px; }
+  .dur { color: var(--text-dim); font-family: monospace; font-size: 12px; text-align: right; white-space: nowrap; }
+  .err { color: var(--error); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .finish-stop { color: var(--success); }
+  .finish-error { color: var(--error); }
+
+  /* ── Tool call pills ─────────────────────── */
+
+  .tool-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tool-pill {
+    background: #1a2a3a;
+    border: 1px solid #2a3a5a;
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .tool-pill:hover { background: #2a3a5a; }
+  .tool-pill.error { border-color: #5a2a2a; color: var(--error); background: #2a1a1a; }
+
+  /* ── Detail panel ────────────────────────── */
+
+  .detail-panel {
+    display: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 500px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 10;
+    flex-direction: column;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+  }
+  .detail-panel.open { display: flex; }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .detail-header h3 { font-size: 14px; }
+  .detail-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .detail-close:hover { color: var(--text); }
+
+  .detail-body {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+  }
+
+  .detail-section { margin-bottom: 16px; }
+  .detail-section h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .detail-kv {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 4px 12px;
+    font-size: 13px;
+  }
+  .detail-kv .k { color: var(--text-dim); }
+  .detail-kv .v { font-family: monospace; font-size: 12px; }
+
+  .detail-tool {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .detail-tool .tool-name { color: var(--accent); font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .detail-tool .tool-meta { color: var(--text-dim); font-size: 11px; }
+  .detail-tool pre {
+    background: var(--bg);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    overflow-x: auto;
+    margin-top: 6px;
+    color: var(--text);
+  }
+
+  /* ── Empty state ─────────────────────────── */
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-dim);
+    font-size: 14px;
+    gap: 8px;
+  }
+  .empty-state .icon { font-size: 32px; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Liquid Host</a> <span>/ Logs</span></h1>
+  <div class="nav-links">
+    <a href="/">Chat</a>
+    <a href="/tools">Tools</a>
+    <a href="/training">Training Data</a>
+  </div>
+</header>
+
+<div class="controls">
+  <label>Show</label>
+  <select id="tail-select">
+    <option value="25">25</option>
+    <option value="50">50</option>
+    <option value="100" selected>100</option>
+    <option value="250">250</option>
+    <option value="500">500</option>
+  </select>
+
+  <label>Filter</label>
+  <input type="text" id="filter-input" placeholder="Search logs..." style="width: 200px;">
+
+  <label>Finish</label>
+  <select id="finish-filter">
+    <option value="">All</option>
+    <option value="stop">stop</option>
+    <option value="error">error</option>
+  </select>
+
+  <label>Tools only</label>
+  <input type="checkbox" id="tools-only">
+
+  <span class="spacer"></span>
+
+  <span id="count-badge" class="badge count">0 records</span>
+  <span id="live-badge" class="badge live" style="display:none">LIVE</span>
+
+  <button class="btn" id="refresh-btn">Refresh</button>
+  <button class="btn" id="auto-refresh-btn">Auto-refresh</button>
+</div>
+
+<div class="log-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Model</th>
+        <th>Msgs</th>
+        <th>Rounds</th>
+        <th>Tools</th>
+        <th>Resp</th>
+        <th>Duration</th>
+        <th>Finish</th>
+        <th>Error</th>
+      </tr>
+    </thead>
+    <tbody id="log-body">
+    </tbody>
+  </table>
+  <div class="empty-state" id="empty-state">
+    <div class="icon">&#128220;</div>
+    <div>No inference logs yet</div>
+    <div style="font-size: 12px;">Logs will appear here as requests are processed</div>
+  </div>
+</div>
+
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <h3 id="detail-title">Request Detail</h3>
+    <button class="detail-close" id="detail-close">&times;</button>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</div>
+
+<script>
+const API = window.location.origin;
+let allRecords = [];
+let autoRefreshInterval = null;
+
+// ── Fetch logs ──────────────────────────────
+
+async function fetchLogs() {
+  const tail = document.getElementById('tail-select').value;
+  try {
+    const res = await fetch(`${API}/api/logs/local?tail=${tail}`);
+    const data = await res.json();
+    allRecords = data.records || [];
+    renderTable();
+  } catch (err) {
+    console.error('Failed to fetch logs:', err);
+  }
+}
+
+// ── Render ───────────────────────────────────
+
+function renderTable() {
+  const tbody = document.getElementById('log-body');
+  const empty = document.getElementById('empty-state');
+  const countBadge = document.getElementById('count-badge');
+
+  const filterText = document.getElementById('filter-input').value.toLowerCase();
+  const finishFilter = document.getElementById('finish-filter').value;
+  const toolsOnly = document.getElementById('tools-only').checked;
+
+  let filtered = allRecords.filter(r => {
+    if (finishFilter && r.finish_reason !== finishFilter) return false;
+    if (toolsOnly && (!r.tool_calls || r.tool_calls.length === 0)) return false;
+    if (filterText) {
+      const searchable = JSON.stringify(r).toLowerCase();
+      if (!searchable.includes(filterText)) return false;
+    }
+    return true;
+  });
+
+  countBadge.textContent = `${filtered.length} record${filtered.length !== 1 ? 's' : ''}`;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+
+  empty.style.display = 'none';
+
+  // Reverse to show newest first
+  const rows = [...filtered].reverse();
+
+  tbody.innerHTML = rows.map((r, idx) => {
+    const realIdx = filtered.length - 1 - idx;
+    const ts = (r.timestamp || '').substring(0, 19).replace('T', ' ');
+    const model = r.model || '?';
+    const modelShort = model.length > 20 ? '...' + model.slice(-17) : model;
+    const msgs = r.messages_in || 0;
+    const toolCalls = r.tool_calls || [];
+    const toolHtml = toolCalls.length > 0
+      ? `<div class="tool-pills">${toolCalls.map(t =>
+          `<span class="tool-pill${t.error ? ' error' : ''}" title="${t.name}: ${t.duration_ms?.toFixed(0) || 0}ms">${t.name}</span>`
+        ).join('')}</div>`
+      : '<span style="color:var(--text-dim)">-</span>';
+    const resp = r.response_length || 0;
+    const dur = r.duration_ms ? `${(r.duration_ms / 1000).toFixed(1)}s` : '-';
+    const finish = r.finish_reason || '-';
+    const finishClass = finish === 'stop' ? 'finish-stop' : finish === 'error' ? 'finish-error' : '';
+    const err = r.error || '';
+
+    const rounds = r.total_rounds || 0;
+
+    return `<tr data-idx="${realIdx}" onclick="showDetail(${realIdx})" style="cursor:pointer">
+      <td class="ts">${ts}</td>
+      <td class="model" title="${model}">${modelShort}</td>
+      <td class="num">${msgs}</td>
+      <td class="num">${rounds || '-'}</td>
+      <td>${toolHtml}</td>
+      <td class="num">${resp.toLocaleString()}</td>
+      <td class="dur">${dur}</td>
+      <td class="${finishClass}">${finish}</td>
+      <td class="err" title="${err}">${err.substring(0, 40)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Detail panel ─────────────────────────────
+
+function showDetail(idx) {
+  const r = allRecords[idx];
+  if (!r) return;
+
+  const panel = document.getElementById('detail-panel');
+  const body = document.getElementById('detail-body');
+  const title = document.getElementById('detail-title');
+
+  title.textContent = r.id || 'Request Detail';
+
+  let html = '';
+
+  // User prompt section
+  if (r.prompt) {
+    html += `<div class="detail-section">
+      <h4>User Prompt</h4>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;">${escapeHtml(r.prompt)}</div>
+    </div>`;
+  }
+
+  html += `<div class="detail-section">
+    <h4>Request</h4>
+    <div class="detail-kv">
+      <span class="k">Time</span><span class="v">${r.timestamp || '-'}</span>
+      <span class="k">Model</span><span class="v">${r.model || '-'}</span>
+      <span class="k">Messages</span><span class="v">${r.messages_in || 0}</span>
+      <span class="k">Temperature</span><span class="v">${r.temperature ?? '-'}</span>
+      <span class="k">Max tokens</span><span class="v">${r.max_tokens || '-'}</span>
+      <span class="k">Stream</span><span class="v">${r.stream ?? '-'}</span>
+      <span class="k">Use tools</span><span class="v">${r.use_tools ?? '-'}</span>
+    </div>
+  </div>`;
+
+  html += `<div class="detail-section">
+    <h4>Response</h4>
+    <div class="detail-kv">
+      <span class="k">Length</span><span class="v">${(r.response_length || 0).toLocaleString()} chars</span>
+      <span class="k">Finish</span><span class="v ${r.finish_reason === 'stop' ? 'finish-stop' : r.finish_reason === 'error' ? 'finish-error' : ''}">${r.finish_reason || '-'}</span>
+      <span class="k">Duration</span><span class="v">${r.duration_ms ? (r.duration_ms / 1000).toFixed(2) + 's' : '-'}</span>
+      ${r.error ? `<span class="k">Error</span><span class="v" style="color:var(--error)">${r.error}</span>` : ''}
+    </div>
+  </div>`;
+
+  // Response text section
+  if (r.response_text) {
+    html += `<div class="detail-section">
+      <h4>Output</h4>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;">${escapeHtml(r.response_text)}</div>
+    </div>`;
+  }
+
+  // Per-round details
+  const rounds = r.rounds || [];
+  if (rounds.length > 0) {
+    html += `<div class="detail-section"><h4>Tool-Calling Rounds (${rounds.length})</h4>`;
+    for (const round of rounds) {
+      html += `<div class="detail-tool" style="margin-bottom:12px">
+        <div class="tool-name" style="color:var(--text)">Round ${round.round} &mdash; ${round.tool_calls_found} tool call(s)</div>
+        <div style="margin-top:6px"><span style="color:var(--text-dim);font-size:11px">RAW MODEL OUTPUT:</span></div>
+        <pre style="max-height:200px;overflow-y:auto">${escapeHtml(round.raw_output || '')}</pre>`;
+
+      const roundTools = round.tool_calls || [];
+      for (const t of roundTools) {
+        html += `<div style="margin-top:8px;padding:8px;background:var(--bg);border-radius:4px;border:1px solid var(--border)">
+          <div class="tool-name">${escapeHtml(t.name)}${t.error ? ' <span style="color:var(--error)">(error)</span>' : ''}</div>
+          <div class="tool-meta">
+            ${t.duration_ms ? (t.duration_ms / 1000).toFixed(2) + 's' : '-'}
+            &middot; ${(t.result_length || 0).toLocaleString()} chars result
+          </div>
+          ${Object.keys(t.arguments || {}).length > 0
+            ? `<div style="margin-top:4px"><span style="color:var(--text-dim);font-size:11px">ARGUMENTS:</span></div><pre>${escapeHtml(JSON.stringify(t.arguments, null, 2))}</pre>`
+            : ''}
+          ${t.result_preview
+            ? `<div style="margin-top:4px"><span style="color:var(--text-dim);font-size:11px">RESULT PREVIEW:</span></div><pre style="max-height:150px;overflow-y:auto">${escapeHtml(t.result_preview)}</pre>`
+            : ''}
+          ${t.error ? `<div style="color:var(--error);font-size:12px;margin-top:4px">${escapeHtml(t.error)}</div>` : ''}
+        </div>`;
+      }
+      html += `</div>`;
+    }
+    html += '</div>';
+  }
+
+  // Flat tool calls (for non-round-based or summary view)
+  const toolCalls = r.tool_calls || [];
+  if (toolCalls.length > 0 && rounds.length === 0) {
+    html += `<div class="detail-section"><h4>Tool Calls (${toolCalls.length})</h4>`;
+    for (const t of toolCalls) {
+      html += `<div class="detail-tool">
+        <div class="tool-name">${escapeHtml(t.name)}${t.error ? ' <span style="color:var(--error)">(error)</span>' : ''}</div>
+        <div class="tool-meta">
+          ${t.duration_ms ? (t.duration_ms / 1000).toFixed(2) + 's' : '-'}
+          &middot; ${(t.result_length || 0).toLocaleString()} chars result
+        </div>
+        ${Object.keys(t.arguments || {}).length > 0
+          ? `<pre>${escapeHtml(JSON.stringify(t.arguments, null, 2))}</pre>`
+          : ''}
+        ${t.result_preview
+          ? `<div style="margin-top:4px"><span style="color:var(--text-dim);font-size:11px">RESULT PREVIEW:</span></div><pre style="max-height:150px;overflow-y:auto">${escapeHtml(t.result_preview)}</pre>`
+          : ''}
+        ${t.error ? `<div style="color:var(--error);font-size:12px;margin-top:4px">${escapeHtml(t.error)}</div>` : ''}
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  body.innerHTML = html;
+  panel.classList.add('open');
+}
+
+// ── Helpers ──────────────────────────────────
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Events ───────────────────────────────────
+
+document.getElementById('detail-close').addEventListener('click', () => {
+  document.getElementById('detail-panel').classList.remove('open');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('detail-panel').classList.remove('open');
+});
+
+document.getElementById('refresh-btn').addEventListener('click', fetchLogs);
+document.getElementById('tail-select').addEventListener('change', fetchLogs);
+document.getElementById('filter-input').addEventListener('input', renderTable);
+document.getElementById('finish-filter').addEventListener('change', renderTable);
+document.getElementById('tools-only').addEventListener('change', renderTable);
+
+document.getElementById('auto-refresh-btn').addEventListener('click', function() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+    this.classList.remove('active');
+    document.getElementById('live-badge').style.display = 'none';
+  } else {
+    autoRefreshInterval = setInterval(fetchLogs, 5000);
+    this.classList.add('active');
+    document.getElementById('live-badge').style.display = '';
+    fetchLogs();
+  }
+});
+
+// Initial load
+fetchLogs();
+</script>
+</body>
+</html>

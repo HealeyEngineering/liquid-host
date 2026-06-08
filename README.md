@@ -367,7 +367,9 @@ Each line is a JSON object with a `messages` array. Supports `user`, `assistant`
 {"messages": [{"role": "user", "content": "What were AAPL's Q3 results?"}, {"role": "assistant", "content": "<think>Look up AAPL earnings.</think>\nLooking up recent AAPL earnings...\n[find_events(bloomberg_ticker='AAPL:US', event_type='earnings')]"}, {"role": "tool", "content": "{\"events\": [...]}"}, {"role": "assistant", "content": "Apple reported Q3 revenue of $85.8B..."}]}
 ```
 
-See `data/training/aiera_tools_v4.jsonl` for 286 examples covering all 39 Aiera MCP tools (earnings, financials, filings, transcripts, conferences, indexes, watchlists, sectors, Third Bridge, company docs, research metadata, web search, and more).
+See `data/training/aiera_tools_v6.jsonl` for 208 examples covering all 41 Aiera MCP tools (earnings, financials, filings, transcripts, conferences, indexes, watchlists, sectors, Third Bridge, company docs, research metadata, web search, and more).
+
+For detailed instructions on creating, updating, and maintaining training data — including style requirements, citation standards, and the automated update script — see **[docs/TRAINING_DATA.md](docs/TRAINING_DATA.md)**.
 
 ### Install Training Dependencies
 

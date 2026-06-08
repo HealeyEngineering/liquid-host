@@ -69,7 +69,7 @@
   /* ── Sidebar ────────────────────────────── */
 
   .sidebar {
-    width: 280px;
+    width: 400px;
     border-right: 1px solid var(--border);
     background: var(--surface);
     display: flex;
@@ -357,6 +357,7 @@
     <span id="key-status" style="font-size: 11px; color: var(--text-dim);"></span>
     <a href="/">Chat</a>
     <a href="/training">Training Data</a>
+    <a href="/logs">Logs</a>
   </div>
 </header>
 
@@ -388,7 +389,7 @@ async function loadTools() {
   try {
     const res = await fetch(`${API}/api/tools`);
     const data = await res.json();
-    allTools = data.tools || [];
+    allTools = (data.tools || []).sort((a, b) => a.name.localeCompare(b.name));
     renderToolList();
   } catch (e) {
     toast("Failed to load tools: " + e.message, "error");
@@ -449,7 +450,15 @@ function renderToolPanel(tool) {
       const type = prop.type || "string";
       const desc = prop.description || "";
       const enumVals = prop.enum;
-      const defaultVal = prop.default !== undefined ? prop.default : "";
+      let defaultVal = prop.default !== undefined ? prop.default : "";
+
+      // Pre-fill date parameters with sensible defaults
+      if (name === "start_date" && !defaultVal) {
+        const d = new Date(); d.setDate(d.getDate() - 10);
+        defaultVal = d.toISOString().slice(0, 10);
+      } else if (name === "end_date" && !defaultVal) {
+        defaultVal = new Date().toISOString().slice(0, 10);
+      }
 
       let inputHtml;
       if (enumVals) {
@@ -465,6 +474,8 @@ function renderToolPanel(tool) {
         inputHtml = `<textarea id="param-${name}" placeholder='${type === "array" ? "[]" : "{}"}'>${defaultVal ? JSON.stringify(defaultVal) : ""}</textarea>`;
       } else if (type === "integer" || type === "number") {
         inputHtml = `<input type="number" id="param-${name}" placeholder="${defaultVal}" ${prop.minimum !== undefined ? `min="${prop.minimum}"` : ""} ${prop.maximum !== undefined ? `max="${prop.maximum}"` : ""}>`;
+      } else if (name === "start_date" || name === "end_date") {
+        inputHtml = `<input type="text" id="param-${name}" value="${defaultVal}" placeholder="YYYY-MM-DD">`;
       } else {
         inputHtml = `<input type="text" id="param-${name}" placeholder="${defaultVal}">`;
       }
@@ -540,6 +551,12 @@ function gatherArgs() {
       args[name] = val;
     }
   }
+
+  // Always inject self_identification if the tool schema supports it
+  if (properties.self_identification !== undefined) {
+    args.self_identification = "liquid_host";
+  }
+
   return args;
 }
 
